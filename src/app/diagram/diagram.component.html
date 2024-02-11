@@ -1,0 +1,10 @@
+<div id="sample">
+  <div id="myDiagramDiv" [style.backgroundColor]="darkMode ? '#242424' : 'white'"
+       style="border: solid 1px black; width: 700px; height: 700px"></div>
+  <button (click)="toggleDarkMode()">
+    {{ darkMode ? 'Light Mode' : 'Dark Mode' }}
+  </button>
+  <button (click)="addEntity()">
+    Add Entity
+  </button>
+</div>
