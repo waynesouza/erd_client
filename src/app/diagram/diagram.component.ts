@@ -12,11 +12,12 @@ export class DiagramComponent implements OnInit {
 
   @Input() entities: any[] = [];
   darkMode: boolean = false;
+  showTableEditor: boolean = false;
+  selectedEntity: any = {};
   // @ts-ignore
   public diagram: go.Diagram = null;
 
-  constructor() {
-  }
+  constructor() {}
 
   ngOnInit(): void {
     this.initializeDiagram();
@@ -27,7 +28,7 @@ export class DiagramComponent implements OnInit {
 
     this.diagram.model = new go.GraphLinksModel({nodeDataArray: this.entities});
 
-    const itemTempl = $(go.Panel, 'Horizontal',
+    const itemTemplate = $(go.Panel, 'Horizontal',
       $(go.Shape,
         {desiredSize: new go.Size(15, 15), strokeJoin: 'round', strokeWidth: 3, stroke: '#eeeeee', margin: 2},
         new go.Binding('figure', 'figure')
@@ -93,13 +94,19 @@ export class DiagramComponent implements OnInit {
               name: 'NonInherited',
               alignment: go.Spot.TopLeft,
               defaultAlignment: go.Spot.Left,
-              itemTemplate: itemTempl,
+              itemTemplate: itemTemplate,
               row: 1
             },
             new go.Binding('itemArray', 'items')),
         )
       ),
     )
+
+    this.diagram.nodeTemplate.doubleClick = (e, node) => {
+      // @ts-ignore
+      const clickedNode = node.part.data;
+      this.showTableEditorModal(clickedNode);
+    }
   }
 
   toggleDarkMode(): void {
@@ -108,6 +115,7 @@ export class DiagramComponent implements OnInit {
 
   addEntity(): void {
     const newEntity = {
+      id: crypto.randomUUID(),
       key: `Entity ${this.entities.length + 1}`,
       items: [],
       location: new go.Point(Math.random() * 400, Math.random() * 400)
@@ -117,6 +125,25 @@ export class DiagramComponent implements OnInit {
     this.diagram.model = new go.GraphLinksModel({
       nodeDataArray: this.entities
     });
+  }
+
+  showTableEditorModal(entity: any): void {
+    this.selectedEntity = entity;
+    this.showTableEditor = true;
+  }
+
+  handleSave(entity: any): void {
+    this.showTableEditor = false;
+    const index = this.entities.findIndex(e => e.id === entity.id);
+    console.log(entity);
+    this.entities[index].items = entity.items;
+    this.diagram.model = new go.GraphLinksModel({
+      nodeDataArray: this.entities
+    });
+  }
+
+  handleClose(): void {
+    this.showTableEditor = false;
   }
 
 }

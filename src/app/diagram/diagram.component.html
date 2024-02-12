@@ -8,3 +8,9 @@
     Add Entity
   </button>
 </div>
+<!-- deu esse erro: Only void and foreign elements can be self closed "app-table-editor"-->
+
+<app-table-editor *ngIf="showTableEditor"
+                  [entity]="selectedEntity"
+                  (onSave)="handleSave($event)"
+                  (onClose)="handleClose()"></app-table-editor>

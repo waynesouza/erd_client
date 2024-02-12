@@ -1,0 +1,21 @@
+<div>
+  <form>
+    <div class="table-header">
+      <input type="text" [(ngModel)]="entity.key" placeholder="Table Name" name="tableName" required>
+    </div>
+    <div class="table-body">
+      <div *ngFor="let column of entity.items; let i = index" class="column">
+        <input type="text" [(ngModel)]="column.name" placeholder="Column Name" name="columnName" required>
+        <select [(ngModel)]="column.type" name="columnType" required>
+          <option value="string">String</option>
+          <option value="number">Number</option>
+          <option value="boolean">Boolean</option>
+          <option value="date">Date</option>
+        </select>
+        <button (click)="removeColumn(i)">Remove</button>
+      </div>
+      <button (click)="addColumn()">Add Column</button>
+      <button (click)="saveTable()">Save</button>
+    </div>
+  </form>
+</div>
