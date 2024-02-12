@@ -8,7 +8,11 @@
     Add Entity
   </button>
 </div>
-<!-- deu esse erro: Only void and foreign elements can be self closed "app-table-editor"-->
+<div>
+  <button (click)="selectRelationshipType('1:1')">1:1</button>
+  <button (click)="selectRelationshipType('1:n')">1:N</button>
+  <button (click)="selectRelationshipType('n:n')">N:N</button>
+</div>
 
 <app-table-editor *ngIf="showTableEditor"
                   [entity]="selectedEntity"

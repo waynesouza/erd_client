@@ -11,13 +11,17 @@ const $ = go.GraphObject.make;
 export class DiagramComponent implements OnInit {
 
   @Input() entities: any[] = [];
+  relationships: any[] = [];
   darkMode: boolean = false;
   showTableEditor: boolean = false;
   selectedEntity: any = {};
+  selectedRelationshipType: '1:1' | '1:n' | 'n:n' | null = null;
+  selectedEntities: any[] = [];
   // @ts-ignore
   public diagram: go.Diagram = null;
 
-  constructor() {}
+  constructor() {
+  }
 
   ngOnInit(): void {
     this.initializeDiagram();
@@ -45,7 +49,11 @@ export class DiagramComponent implements OnInit {
         toSpot: go.Spot.LeftRightSides,
         isShadowed: true,
         shadowOffset: new go.Point(4, 4),
-        shadowColor: '#919cab'
+        shadowColor: '#919cab',
+        click: (e, node) => {
+          // @ts-ignore
+          this.entityClicked(node.part.data);
+        }
       },
       new go.Binding('location', 'location').makeTwoWay(),
       new go.Binding('desiredSize', 'visible', v => new go.Size(NaN, NaN)).ofObject('LIST'),
@@ -100,7 +108,50 @@ export class DiagramComponent implements OnInit {
             new go.Binding('itemArray', 'items')),
         )
       ),
-    )
+    );
+
+    this.diagram.linkTemplate = $(go.Link, {
+        selectionAdorned: true,
+        curve: go.Link.JumpOver,
+        // reshapable: true,
+        corner: 5,
+        layerName: 'Background',
+        isShadowed: true,
+        shadowColor: '#919cab',
+        shadowOffset: new go.Point(2, 2),
+        routing: go.Link.AvoidsNodes
+      },
+      $(go.Shape,  // the link shape
+        {stroke: "#f7f9fc", strokeWidth: 4}),
+      $(go.Panel, "Auto", {segmentIndex: 0, segmentOffset: new go.Point(22, 0)},
+        $(go.Shape, "RoundedRectangle", {fill: "#f7f9fc"}, {stroke: "#eeeeee"}),
+        $(go.TextBlock,  // the "from" label
+          {
+            textAlign: "center",
+            font: "bold 14px sans-serif",
+            stroke: "black",
+            background: "#f7f9fc",
+            segmentOffset: new go.Point(NaN, NaN),
+            segmentOrientation: go.Link.OrientUpright
+          },
+          new go.Binding("text", "text"))),
+      $(go.Panel, "Auto",
+        {
+          segmentIndex: -1,
+          segmentOffset: new go.Point(-13, 0)
+        },
+        $(go.Shape, "RoundedRectangle", {fill: "#edf6fc"}, {stroke: "#eeeeee"}),
+        $(go.TextBlock,  // the "to" label
+          {
+            textAlign: "center",
+            font: "bold 14px sans-serif",
+            stroke: "black",
+            segmentIndex: -1,
+            segmentOffset: new go.Point(NaN, NaN),
+            segmentOrientation: go.Link.OrientUpright
+          },
+          new go.Binding("text", "toText")))
+    );
 
     this.diagram.nodeTemplate.doubleClick = (e, node) => {
       // @ts-ignore
@@ -116,14 +167,15 @@ export class DiagramComponent implements OnInit {
   addEntity(): void {
     const newEntity = {
       id: crypto.randomUUID(),
-      key: `Entity ${this.entities.length + 1}`,
+      key: `table${this.entities.length + 1}`,
       items: [],
       location: new go.Point(Math.random() * 400, Math.random() * 400)
     };
 
     this.entities.push(newEntity);
     this.diagram.model = new go.GraphLinksModel({
-      nodeDataArray: this.entities
+      nodeDataArray: this.entities,
+      linkDataArray: this.relationships
     });
   }
 
@@ -135,15 +187,58 @@ export class DiagramComponent implements OnInit {
   handleSave(entity: any): void {
     this.showTableEditor = false;
     const index = this.entities.findIndex(e => e.id === entity.id);
-    console.log(entity);
     this.entities[index].items = entity.items;
     this.diagram.model = new go.GraphLinksModel({
-      nodeDataArray: this.entities
+      nodeDataArray: this.entities,
+      linkDataArray: this.relationships
     });
   }
 
   handleClose(): void {
     this.showTableEditor = false;
+  }
+
+  selectRelationshipType(type: '1:1' | '1:n' | 'n:n'): void {
+    this.selectedRelationshipType = type;
+    this.selectedEntities = [];
+  }
+
+  entityClicked(entity: any): void {
+    console.log(this.selectedEntities);
+
+    if (this.selectedRelationshipType && this.selectedEntities.length < 2) {
+      this.selectedEntities.push(entity);
+    }
+    if (this.selectedEntities.length === 2) {
+      const linkData = {
+        from: this.selectedEntities[0].key,
+        to: this.selectedEntities[1].key,
+        text: this.selectedRelationshipType,
+        toText: 1,
+      };
+
+      this.createRelationship(linkData);
+      this.selectedRelationshipType = null;
+    }
+  }
+
+  createRelationship(linkData: any): void {
+    this.relationships.push(linkData);
+    this.remakeDiagram();
+    console.log(this.relationships);
+    this.selectedEntities = [];
+  }
+
+  removeRelationship(): void {
+    this.relationships.pop();
+    this.remakeDiagram();
+  }
+
+  remakeDiagram(): void {
+    this.diagram.model = new go.GraphLinksModel({
+      nodeDataArray: this.entities,
+      linkDataArray: this.relationships
+    });
   }
 
 }

@@ -13,7 +13,11 @@ export class TableEditorComponent {
 
   addColumn() {
     console.log(this.entity);
-    this.entity.items.push({name: '', type: ''});
+    const newColumn = {
+      name: '',
+      type: ''
+    }
+    this.entity.items = [...this.entity.items, newColumn];
   }
 
   removeColumn(index: number) {

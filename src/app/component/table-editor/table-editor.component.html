@@ -4,9 +4,10 @@
       <input type="text" [(ngModel)]="entity.key" placeholder="Table Name" name="tableName" required>
     </div>
     <div class="table-body">
-      <div *ngFor="let column of entity.items; let i = index" class="column">
-        <input type="text" [(ngModel)]="column.name" placeholder="Column Name" name="columnName" required>
-        <select [(ngModel)]="column.type" name="columnType" required>
+
+      <div *ngFor="let column of entity.items; let i = index">
+        <input type="text" [(ngModel)]="column.name" [name]="'columnName-' + i" placeholder="Column Name" required>
+        <select [(ngModel)]="column.type" [name]="'columnType-' + i" required>
           <option value="string">String</option>
           <option value="number">Number</option>
           <option value="boolean">Boolean</option>
