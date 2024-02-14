@@ -29,6 +29,7 @@
           },
           "configurations": {
             "production": {
+              "allowedCommonJsDependencies": ["stompjs", "sockjs-client"],
               "budgets": [
                 {
                   "type": "initial",

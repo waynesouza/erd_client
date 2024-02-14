@@ -13,6 +13,9 @@
   <button (click)="selectRelationshipType('1:n')">1:N</button>
   <button (click)="selectRelationshipType('n:n')">N:N</button>
 </div>
+<div>
+  <button (click)="sendToServer()">Save</button>
+</div>
 
 <app-table-editor *ngIf="showTableEditor"
                   [entity]="selectedEntity"

@@ -1,5 +1,9 @@
 import {Component, Input, OnInit} from '@angular/core';
 import * as go from 'gojs';
+// @ts-ignore
+import * as sockjs from 'sockjs-client';
+// @ts-ignore
+import * as stomp from 'stompjs';
 
 const $ = go.GraphObject.make;
 
@@ -20,10 +24,21 @@ export class DiagramComponent implements OnInit {
   // @ts-ignore
   public diagram: go.Diagram = null;
 
+  private stompClient: any;
+
   constructor() {
   }
 
   ngOnInit(): void {
+    const socket = new sockjs('http://localhost:8080/send');
+    this.stompClient = stomp.over(socket);
+
+    this.stompClient.connect({}, () => {
+      this.stompClient.subscribe('/topic/receive', (message: any) => {
+        console.log(message);
+      });
+    });
+
     this.initializeDiagram();
   }
 
@@ -150,7 +165,25 @@ export class DiagramComponent implements OnInit {
             segmentOffset: new go.Point(NaN, NaN),
             segmentOrientation: go.Link.OrientUpright
           },
-          new go.Binding("text", "toText")))
+          new go.Binding("text", "toText")),
+        $(go.Panel, "Auto",
+          {
+            segmentIndex: 0,
+            segmentOffset: new go.Point(0, 0),
+            segmentOrientation: go.Link.OrientUpright
+          },
+          $(go.Shape, "Circle", {fill: "#f7f9fc", stroke: "#eeeeee", width: 16, height: 16}),
+          $(go.TextBlock, "X", {
+            font: "bold 14px sans-serif",
+            stroke: "black",
+            segmentIndex: 0,
+            segmentOffset: new go.Point(NaN, NaN),
+            segmentOrientation: go.Link.OrientUpright,
+            click: () => {
+              this.removeRelationship();
+            }
+          })
+        )),
     );
 
     this.diagram.nodeTemplate.doubleClick = (e, node) => {
@@ -239,6 +272,22 @@ export class DiagramComponent implements OnInit {
       nodeDataArray: this.entities,
       linkDataArray: this.relationships
     });
+  }
+
+  sendToServer(): void {
+    const message = JSON.stringify({
+      nodeDataArray: this.entities,
+      linkDataArray: this.relationships,
+      darkMode: this.darkMode
+    });
+
+    console.log('Sending message to server:', message);
+
+    if (this.stompClient && this.stompClient.connected) {
+      this.stompClient.send('/app/send', {}, message);
+    } else {
+      console.log('Cannot send message, stompClient is not connected');
+    }
   }
 
 }
