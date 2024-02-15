@@ -1,9 +1,10 @@
-import {Component, Input, OnInit} from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import * as go from 'gojs';
 // @ts-ignore
 import * as sockjs from 'sockjs-client';
 // @ts-ignore
 import * as stomp from 'stompjs';
+import { DiagramService } from "../service/diagram.service";
 
 const $ = go.GraphObject.make;
 
@@ -26,10 +27,10 @@ export class DiagramComponent implements OnInit {
 
   private stompClient: any;
 
-  constructor() {
-  }
+  constructor(private diagramService: DiagramService) { }
 
   ngOnInit(): void {
+    const projectId = '04c09597-5338-43cd-81b3-02f480d9af09';
     const socket = new sockjs('http://localhost:8080/send');
     this.stompClient = stomp.over(socket);
 
@@ -39,7 +40,13 @@ export class DiagramComponent implements OnInit {
       });
     });
 
-    this.initializeDiagram();
+    this.diagramService.getDiagram(projectId).subscribe((data: any) => {
+      this.entities = data.nodeDataArray;
+      this.relationships = data.linkDataArray;
+      this.initializeDiagram();
+    }, error => {
+      this.initializeDiagram();
+    });
   }
 
   private initializeDiagram(): void {
@@ -278,6 +285,7 @@ export class DiagramComponent implements OnInit {
     const message = JSON.stringify({
       nodeDataArray: this.entities,
       linkDataArray: this.relationships,
+      projectId: '04c09597-5338-43cd-81b3-02f480d9af09',
       darkMode: this.darkMode
     });
 

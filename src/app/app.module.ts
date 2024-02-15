@@ -6,6 +6,7 @@ import { AppComponent } from './app.component';
 import { DiagramComponent } from './diagram/diagram.component';
 import { FormsModule } from "@angular/forms";
 import { TableEditorComponent } from './component/table-editor/table-editor.component';
+import {HttpClientModule} from "@angular/common/http";
 
 @NgModule({
   declarations: [
@@ -16,7 +17,8 @@ import { TableEditorComponent } from './component/table-editor/table-editor.comp
     imports: [
         BrowserModule,
         AppRoutingModule,
-        FormsModule
+        FormsModule,
+        HttpClientModule
     ],
   providers: [],
   bootstrap: [AppComponent]
