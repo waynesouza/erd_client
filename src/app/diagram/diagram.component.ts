@@ -5,7 +5,8 @@ import * as sockjs from 'sockjs-client';
 // @ts-ignore
 import * as stomp from 'stompjs';
 import { DiagramService } from "../service/diagram.service";
-
+import { DiagramData } from '../model/diagram.model';
+import {Entity} from "../model/entity.model";
 const $ = go.GraphObject.make;
 
 @Component({
@@ -15,8 +16,9 @@ const $ = go.GraphObject.make;
 })
 export class DiagramComponent implements OnInit {
 
-  @Input() entities: any[] = [];
+  @Input() entities: Entity[] = [];
   relationships: any[] = [];
+  locations: go.Point[] = [];
   darkMode: boolean = false;
   showTableEditor: boolean = false;
   selectedEntity: any = {};
@@ -36,16 +38,23 @@ export class DiagramComponent implements OnInit {
 
     this.stompClient.connect({}, () => {
       this.stompClient.subscribe('/topic/receive', (message: any) => {
-        console.log(message);
+        console.log('Received message from server:', message);
+        this.receiveMessageAndRemakeDiagram(message);
       });
     });
 
-    this.diagramService.getDiagram(projectId).subscribe((data: any) => {
-      this.entities = data.nodeDataArray;
-      this.relationships = data.linkDataArray;
-      this.initializeDiagram();
-    }, error => {
-      this.initializeDiagram();
+    this.diagramService.getDiagram(projectId).subscribe({
+      next: (diagramData: DiagramData) => {
+        this.locations = diagramData.nodeDataArray.map((entity: Entity) => {
+          return new go.Point(Number(entity.location.x), Number(entity.location.y));
+        });
+        this.entities = diagramData.nodeDataArray;
+        this.relationships = diagramData.linkDataArray;
+        this.initializeDiagram();
+        this.remakeDiagram();
+      }, error: () => {
+        this.initializeDiagram();
+      }
     });
   }
 
@@ -135,7 +144,6 @@ export class DiagramComponent implements OnInit {
     this.diagram.linkTemplate = $(go.Link, {
         selectionAdorned: true,
         curve: go.Link.JumpOver,
-        // reshapable: true,
         corner: 5,
         layerName: 'Background',
         isShadowed: true,
@@ -143,7 +151,7 @@ export class DiagramComponent implements OnInit {
         shadowOffset: new go.Point(2, 2),
         routing: go.Link.AvoidsNodes
       },
-      $(go.Shape,  // the link shape
+      $(go.Shape,
         {stroke: "#f7f9fc", strokeWidth: 4}),
       $(go.Panel, "Auto", {segmentIndex: 0, segmentOffset: new go.Point(22, 0)},
         $(go.Shape, "RoundedRectangle", {fill: "#f7f9fc"}, {stroke: "#eeeeee"}),
@@ -205,7 +213,7 @@ export class DiagramComponent implements OnInit {
   }
 
   addEntity(): void {
-    const newEntity = {
+    const newEntity: Entity = {
       id: crypto.randomUUID(),
       key: `table${this.entities.length + 1}`,
       items: [],
@@ -227,7 +235,22 @@ export class DiagramComponent implements OnInit {
   handleSave(entity: any): void {
     this.showTableEditor = false;
     const index = this.entities.findIndex(e => e.id === entity.id);
+
+    const oldKey = this.entities[index].key;
+    const newKey = entity.key;
+
     this.entities[index].items = entity.items;
+    this.entities[index].key = newKey;
+
+    this.relationships.forEach((relationship) => {
+      if (relationship.from === oldKey) {
+        relationship.from = newKey;
+      }
+      if (relationship.to === oldKey) {
+        relationship.to = newKey;
+      }
+    });
+
     this.diagram.model = new go.GraphLinksModel({
       nodeDataArray: this.entities,
       linkDataArray: this.relationships
@@ -244,7 +267,6 @@ export class DiagramComponent implements OnInit {
   }
 
   entityClicked(entity: any): void {
-    console.log(this.selectedEntities);
 
     if (this.selectedRelationshipType && this.selectedEntities.length < 2) {
       this.selectedEntities.push(entity);
@@ -265,7 +287,6 @@ export class DiagramComponent implements OnInit {
   createRelationship(linkData: any): void {
     this.relationships.push(linkData);
     this.remakeDiagram();
-    console.log(this.relationships);
     this.selectedEntities = [];
   }
 
@@ -275,10 +296,24 @@ export class DiagramComponent implements OnInit {
   }
 
   remakeDiagram(): void {
+    this.entities.forEach((entity, index) => {
+      entity.location = this.locations[index];
+    });
     this.diagram.model = new go.GraphLinksModel({
       nodeDataArray: this.entities,
       linkDataArray: this.relationships
     });
+  }
+
+  receiveMessageAndRemakeDiagram(message: any): void {
+    console.log('Received message from server:', message);
+    const data = JSON.parse(message.body);
+    this.locations = data.nodeDataArray.map((entity: Entity) => {
+      return new go.Point(Number(entity.location.x), Number(entity.location.y));
+    });
+    this.entities = data.nodeDataArray;
+    this.relationships = data.linkDataArray;
+    this.remakeDiagram();
   }
 
   sendToServer(): void {
