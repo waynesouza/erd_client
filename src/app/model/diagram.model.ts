@@ -1,6 +1,7 @@
-import {Entity} from "./entity.model";
+import { Entity } from './entity.model';
 
 export interface DiagramData {
+
   nodeDataArray: Entity[];
   linkDataArray: {
     from: string;
@@ -8,4 +9,5 @@ export interface DiagramData {
     text: string;
     toText: string;
   }[];
+
 }
