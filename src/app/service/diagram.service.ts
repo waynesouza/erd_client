@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {DiagramData} from "../model/diagram.model";
+import { DiagramData } from '../model/diagram.model';
 
 const BASE_URL = 'http://localhost:8080';
 

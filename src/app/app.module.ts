@@ -10,6 +10,9 @@ import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { JwtInterceptor } from './interceptor/jwt.interceptor';
 import { LoginComponent } from './component/login/login.component';
 import { RegisterComponent } from './component/register/register.component';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
+import { PasswordModule } from 'primeng/password';
 
 @NgModule({
   declarations: [
@@ -19,12 +22,15 @@ import { RegisterComponent } from './component/register/register.component';
     LoginComponent,
     RegisterComponent,
   ],
-    imports: [
-        BrowserModule,
-        AppRoutingModule,
-        FormsModule,
-        HttpClientModule
-    ],
+  imports: [
+      BrowserModule,
+      InputTextModule,
+      ButtonModule,
+      PasswordModule,
+      AppRoutingModule,
+      FormsModule,
+      HttpClientModule
+  ],
   providers: [{provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true}],
   bootstrap: [AppComponent]
 })

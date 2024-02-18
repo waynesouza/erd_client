@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
-import { Register } from "../model/register.model";
-import { Login } from "../model/login.model";
+import { Register } from '../model/register.model';
+import { Login } from '../model/login.model';
 
 const BASE_URL = 'http://localhost:8080/auth';
 
