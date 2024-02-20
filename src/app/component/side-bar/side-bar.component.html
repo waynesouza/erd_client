@@ -1,0 +1,11 @@
+<p-sidebar [(visible)]="isVisible" [baseZIndex]="10000">
+  <button (click)="toggleSidebar()">Toggle Sidebar</button>
+  <ul>
+    <li *ngFor="let project of projects">{{ project }}</li>
+  </ul>
+  <div *ngIf="authService.isLoggedIn()">
+    <p>{{ fullName }}</p>
+    <p>{{ email }}</p>
+    <button (click)="logout()">Logout</button>
+  </div>
+</p-sidebar>

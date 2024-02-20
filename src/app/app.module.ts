@@ -13,6 +13,9 @@ import { RegisterComponent } from './component/register/register.component';
 import { InputTextModule } from 'primeng/inputtext';
 import { ButtonModule } from 'primeng/button';
 import { PasswordModule } from 'primeng/password';
+import { SideBarComponent } from './component/side-bar/side-bar.component';
+import { SidebarModule } from "primeng/sidebar";
+import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 
 @NgModule({
   declarations: [
@@ -21,17 +24,21 @@ import { PasswordModule } from 'primeng/password';
     TableEditorComponent,
     LoginComponent,
     RegisterComponent,
+    SideBarComponent,
   ],
   imports: [
-      BrowserModule,
-      InputTextModule,
-      ButtonModule,
-      PasswordModule,
-      AppRoutingModule,
-      FormsModule,
-      HttpClientModule
+    BrowserModule,
+    BrowserAnimationsModule,
+    InputTextModule,
+    ButtonModule,
+    PasswordModule,
+    SidebarModule,
+    AppRoutingModule,
+    FormsModule,
+    HttpClientModule
   ],
   providers: [{provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true}],
   bootstrap: [AppComponent]
 })
-export class AppModule { }
+export class AppModule {
+}

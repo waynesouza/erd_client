@@ -6,7 +6,8 @@ import * as sockjs from 'sockjs-client';
 import * as stomp from 'stompjs';
 import { DiagramService } from "../service/diagram.service";
 import { DiagramData } from '../model/diagram.model';
-import {Entity} from "../model/entity.model";
+import { Entity } from "../model/entity.model";
+
 const $ = go.GraphObject.make;
 
 @Component({
