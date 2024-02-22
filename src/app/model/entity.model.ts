@@ -1,6 +1,6 @@
 import { Point } from 'gojs';
 
-export interface Entity {
+export interface EntityModel {
 
   id: string;
   key: string;

@@ -5,8 +5,8 @@ import * as sockjs from 'sockjs-client';
 // @ts-ignore
 import * as stomp from 'stompjs';
 import { DiagramService } from "../service/diagram.service";
-import { DiagramData } from '../model/diagram.model';
-import { Entity } from "../model/entity.model";
+import { DiagramModel } from '../model/diagram.model';
+import { EntityModel } from "../model/entity.model";
 
 const $ = go.GraphObject.make;
 
@@ -17,7 +17,7 @@ const $ = go.GraphObject.make;
 })
 export class DiagramComponent implements OnInit {
 
-  @Input() entities: Entity[] = [];
+  @Input() entities: EntityModel[] = [];
   relationships: any[] = [];
   locations: go.Point[] = [];
   darkMode: boolean = false;
@@ -45,8 +45,8 @@ export class DiagramComponent implements OnInit {
     });
 
     this.diagramService.getDiagram(projectId).subscribe({
-      next: (diagramData: DiagramData) => {
-        this.locations = diagramData.nodeDataArray.map((entity: Entity) => {
+      next: (diagramData: DiagramModel) => {
+        this.locations = diagramData.nodeDataArray.map((entity: EntityModel) => {
           return new go.Point(Number(entity.location.x), Number(entity.location.y));
         });
         this.entities = diagramData.nodeDataArray;
@@ -214,7 +214,7 @@ export class DiagramComponent implements OnInit {
   }
 
   addEntity(): void {
-    const newEntity: Entity = {
+    const newEntity: EntityModel = {
       id: crypto.randomUUID(),
       key: `table${this.entities.length + 1}`,
       items: [],
@@ -309,7 +309,7 @@ export class DiagramComponent implements OnInit {
   receiveMessageAndRemakeDiagram(message: any): void {
     console.log('Received message from server:', message);
     const data = JSON.parse(message.body);
-    this.locations = data.nodeDataArray.map((entity: Entity) => {
+    this.locations = data.nodeDataArray.map((entity: EntityModel) => {
       return new go.Point(Number(entity.location.x), Number(entity.location.y));
     });
     this.entities = data.nodeDataArray;

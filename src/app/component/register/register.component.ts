@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { Register } from '../../model/register.model';
+import { RegisterModel } from '../../model/register.model';
 import { AuthService } from '../../service/auth.service';
 import { Router } from '@angular/router';
 
@@ -10,7 +10,7 @@ import { Router } from '@angular/router';
 })
 export class RegisterComponent {
 
-  register: Register = {
+  register: RegisterModel = {
     firstName: '',
     lastName: '',
     email: '',

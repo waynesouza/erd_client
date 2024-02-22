@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { catchError, Observable, tap, throwError } from 'rxjs';
-import { Register } from '../model/register.model';
-import { Login } from '../model/login.model';
+import { lastValueFrom, Observable, tap } from 'rxjs';
+import { RegisterModel } from '../model/register.model';
+import { LoginModel } from '../model/login.model';
+import { AuthResponseModel } from "../model/auth-response.model";
 
 const BASE_URL = 'http://localhost:8080/auth';
 
@@ -14,23 +15,25 @@ export class AuthService {
   constructor(private http: HttpClient) {
   }
 
-  login(login: Login): Observable<HttpResponse<any>> {
-    return this.http.post<any>(`${BASE_URL}/login`, login, {observe: 'response', responseType: 'json'})
-      .pipe(tap(res => {
-        this.storeToken(res.body.token);
-        const loggedUser = {
-          fullName: res.body.fullName,
-          email: res.body.email
-        };
-        localStorage.setItem('loggedUser', JSON.stringify(loggedUser));
-        }));
+  async login(login: LoginModel): Promise<Observable<HttpResponse<AuthResponseModel>>> {
+    const response: any = await this.http.post<AuthResponseModel>(`${BASE_URL}/login`, login, {
+      observe: 'response',
+      responseType: 'json'
+    });
+
+    if (response.body) {
+      this.storeToken(response.body.token);
+      const loggedUser = {
+        fullName: response.body.fullName,
+        email: response.body.email
+      };
+      localStorage.setItem('loggedUser', JSON.stringify(loggedUser));
+    }
+
+    return response;
   }
 
-  refreshToken(token: string): Observable<HttpResponse<string>> {
-    return this.http.get(`${BASE_URL}/refresh-token?token=${token}`, {observe: 'response', responseType: 'text'});
-  }
-
-  register(register: Register): Observable<HttpResponse<string>> {
+  register(register: RegisterModel): Observable<HttpResponse<string>> {
     return this.http.post(`${BASE_URL}/addNewUser`, register, {observe: 'response', responseType: 'text'});
   }
 

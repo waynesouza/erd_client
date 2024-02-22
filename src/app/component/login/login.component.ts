@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { AuthService } from '../../service/auth.service';
 import { Router } from '@angular/router';
-import { Login } from '../../model/login.model';
+import { LoginModel } from '../../model/login.model';
 
 @Component({
   selector: 'app-login',
@@ -10,15 +10,15 @@ import { Login } from '../../model/login.model';
 })
 export class LoginComponent {
 
-  login: Login = {
+  login: LoginModel = {
     email: '',
     password: ''
   };
 
   constructor(private authService: AuthService, private router: Router) { }
 
-  onSubmit() {
-    this.authService.login(this.login).subscribe(() => {
+  async onSubmit() {
+    await this.authService.login(this.login).then(() => {
       this.router.navigate(['/diagram']).then();
     });
   }

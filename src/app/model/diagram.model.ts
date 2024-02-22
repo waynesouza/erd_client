@@ -1,8 +1,8 @@
-import { Entity } from './entity.model';
+import { EntityModel } from './entity.model';
 
-export interface DiagramData {
+export interface DiagramModel {
 
-  nodeDataArray: Entity[];
+  nodeDataArray: EntityModel[];
   linkDataArray: {
     from: string;
     to: string;
