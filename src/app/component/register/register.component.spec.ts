@@ -1,18 +1,18 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { TableEditorComponent } from './table-editor.component';
+import { RegisterComponent } from './register.component';
 
-describe('TableEditorComponent', () => {
-  let component: TableEditorComponent;
-  let fixture: ComponentFixture<TableEditorComponent>;
+describe('RegisterComponent', () => {
+  let component: RegisterComponent;
+  let fixture: ComponentFixture<RegisterComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      declarations: [TableEditorComponent]
+      declarations: [RegisterComponent]
     })
       .compileComponents();
 
-    fixture = TestBed.createComponent(TableEditorComponent);
+    fixture = TestBed.createComponent(RegisterComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

@@ -1,0 +1,43 @@
+<form (ngSubmit)="onSubmit()">
+  <div class="p-grid">
+    <div class="p-col-6 p-flex-row p-justify-start">
+      <label for="firstname" class="col-12 mb-2 md:col-2 md:mb-0">First Name:</label>
+    </div>
+    <div class="p-col-6 p-flex-row p-justify-end">
+      <div class="col-12 md:col-10">
+        <input pInputText type="text" id="firstname" name="firstname" [(ngModel)]="register.firstName" required>
+      </div>
+    </div>
+  </div>
+  <div class="p-grid">
+    <div class="p-col-6 p-flex-row p-justify-start">
+      <label for="lastname" class="col-12 mb-2 md:col-2 md:mb-0">Last Name:</label>
+    </div>
+    <div class="p-col-6 p-flex-row p-justify-end">
+      <div class="col-12 md:col-10">
+        <input pInputText type="text" id="lastname" name="lastname" [(ngModel)]="register.lastName" required>
+      </div>
+    </div>
+  </div>
+  <div class="p-grid">
+    <div class="p-col-6 p-flex-row p-justify-start">
+      <label for="email" class="col-12 mb-2 md:col-2 md:mb-0">Email:</label>
+    </div>
+    <div class="p-col-6 p-flex-row p-justify-end">
+      <div class="col-12 md:col-10">
+        <input pInputText type="text" id="email" name="email" [(ngModel)]="register.email" required>
+      </div>
+    </div>
+  </div>
+  <div class="p-grid">
+    <div class="p-col-6 p-flex-row p-justify-start">
+      <label for="password" class="col-12 mb-2 md:col-2 md:mb-0">Password:</label>
+    </div>
+    <div class="p-col-6 p-flex-row p-justify-end">
+      <div class="col-12 md:col-10">
+        <input pPassword type="password" id="password" name="password" [(ngModel)]="register.password" required>
+      </div>
+    </div>
+  </div>
+  <button pButton type="submit" label="Register"></button>
+</form>

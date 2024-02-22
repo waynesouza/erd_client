@@ -1,0 +1,30 @@
+<form (ngSubmit)="onSubmit()">
+  <div class="p-grid">
+    <div class="p-col-6 p-flex-row p-justify-start">
+      <label for="email" class="col-12 mb-2 md:col-2 md:mb-0">Email:</label>
+    </div>
+    <div class="p-col-6 p-flex-row p-justify-end">
+      <div class="col-12 md:col-10">
+        <input pInputText type="text" id="email" name="email" [(ngModel)]="login.email" required>
+      </div>
+    </div>
+  </div>
+  <div class="p-grid">
+    <div class="p-col-6 p-flex-row p-justify-start">
+      <label for="password" class="col-12 mb-2 md:col-2 md:mb-0">Password:</label>
+    </div>
+    <div class="p-col-6 p-flex-row p-justify-end">
+      <div class="col-12 md:col-10">
+        <input pPassword type="password" id="password" name="password" [(ngModel)]="login.password" required>
+      </div>
+    </div>
+  </div>
+  <div class="p-grid">
+    <div class="p-col-6 p-flex-row p-justify-start">
+      <button pButton type="submit" label="Login"></button>
+    </div>
+    <div class="p-col-6 p-flex-row p-justify-end">
+      <p>Don't have an account? <a routerLink="/register">Register</a></p>
+    </div>
+  </div>
+</form>

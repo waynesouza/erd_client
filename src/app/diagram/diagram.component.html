@@ -1,23 +1,24 @@
 <div id="sample">
   <div id="myDiagramDiv" [style.backgroundColor]="darkMode ? '#242424' : 'white'"
        style="border: solid 1px black; width: 700px; height: 700px"></div>
-  <button (click)="toggleDarkMode()">
+  <button (click)="toggleDarkMode()" class="margin-left">
     {{ darkMode ? 'Light Mode' : 'Dark Mode' }}
   </button>
   <button (click)="addEntity()">
     Add Entity
   </button>
 </div>
-<div>
+<div class="margin-left">
   <button (click)="selectRelationshipType('1:1')">1:1</button>
   <button (click)="selectRelationshipType('1:n')">1:N</button>
   <button (click)="selectRelationshipType('n:n')">N:N</button>
 </div>
-<div>
+<div class="margin-left">
   <button (click)="sendToServer()">Save</button>
 </div>
 
 <app-table-editor *ngIf="showTableEditor"
                   [entity]="selectedEntity"
                   (onSave)="handleSave($event)"
-                  (onClose)="handleClose()"></app-table-editor>
+                  (onClose)="handleClose()"
+                  class="margin-left"></app-table-editor>

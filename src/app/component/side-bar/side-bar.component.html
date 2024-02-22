@@ -1,0 +1,20 @@
+<div class="sidebar" *ngIf="!isLoginOrRegisterRoute()">
+  <div class="project-title">Projects</div>
+  <ul>
+    <li *ngFor="let project of projects">{{ project }}</li>
+  </ul>
+  <div class="margin-left-5px logged-user">
+    <div *ngIf="authService.isLoggedIn()" class="flex flex-wrap">
+      <div class="flex justify-content-center align-items-center">
+        <i class="pi pi-user" style="font-size: 3rem"></i>
+        <div>
+          <p>{{ fullName }}</p>
+          <p class="email">{{ email }}</p>
+        </div>
+      </div>
+    </div>
+    <div class="flex flex-wrap justify-content-center">
+      <i class="pi pi-sign-out logout-icon" style="font-size: 1.3rem" (click)="logout()"></i>
+    </div>
+  </div>
+</div>

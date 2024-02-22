@@ -1,0 +1,43 @@
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 250px;
+  background-color: #f2f2f2;
+}
+
+.project-title {
+  background-color: #4a6284;
+  color: white;
+  padding: 10px 0;
+  text-align: center;
+}
+
+.pi-user, .pi-sign-out {
+  font-size: 24px;
+  margin-right: 10px;
+}
+
+.pi-sign-out {
+  cursor: pointer;
+}
+
+.margin-left-5px {
+  margin-left: 5px;
+}
+
+.email {
+  font-size: 0.8rem;
+}
+
+.logged-user {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}
+
+.logout-icon {
+  margin-top: auto;
+  margin-bottom: 0.5rem;
+}
