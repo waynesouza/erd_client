@@ -34,7 +34,7 @@ export class DiagramComponent implements OnInit {
 
   ngOnInit(): void {
     const projectId = '04c09597-5338-43cd-81b3-02f480d9af09';
-    const socket = new sockjs('http://localhost:8080/send');
+    const socket = new sockjs('http://localhost:8080/api/send');
     this.stompClient = stomp.over(socket);
 
     this.stompClient.connect({}, () => {

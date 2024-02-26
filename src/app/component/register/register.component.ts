@@ -15,14 +15,25 @@ export class RegisterComponent {
     lastName: '',
     email: '',
     password: '',
-    role: 'EDITOR'
+    role: 'USER'
   };
+  isSuccessful = false;
+  isSignUpFailed = false;
+  errorMessage = '';
 
   constructor(private authService: AuthService, private router: Router) { }
 
   onSubmit() {
-    this.authService.register(this.register).subscribe(() => {
-      this.router.navigate(['/login']).then();
+    this.authService.register(this.register).subscribe({
+      next: () => {
+        this.isSuccessful = true;
+        this.isSignUpFailed = false;
+        this.router.navigate(['/login']).then();
+      },
+      error: (err) => {
+        this.errorMessage = err.error.message;
+        this.isSignUpFailed = true;
+      }
     });
   }
 

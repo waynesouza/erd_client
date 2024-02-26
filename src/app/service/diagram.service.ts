@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { DiagramData } from '../model/diagram.model';
+import { DiagramModel } from '../model/diagram.model';
 
-const BASE_URL = 'http://localhost:8080';
+const BASE_URL = 'http://localhost:8080/api';
+const httpOptions = { headers: new HttpHeaders({'Content-Type': 'application/json'}) };
 
 @Injectable({
   providedIn: 'root'
@@ -13,7 +14,7 @@ export class DiagramService {
   constructor(private http: HttpClient) {
   }
 
-  getDiagram(projectId: string): Observable<DiagramData> {
-    return this.http.get<DiagramData>(`${BASE_URL}/diagram/${projectId}`);
+  getDiagram(projectId: string): Observable<DiagramModel> {
+    return this.http.get<DiagramModel>(`${BASE_URL}/diagram/${projectId}`, httpOptions);
   }
 }
