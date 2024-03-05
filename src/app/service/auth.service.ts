@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 import { RegisterModel } from '../model/register.model';
 import { LoginModel } from '../model/login.model';
 
-const BASE_URL = 'http://localhost:6868/api';
+const BASE_URL = 'http://localhost:8080/api';
 const httpOptions = { headers: new HttpHeaders({'Content-Type': 'application/json'}) };
 
 @Injectable({

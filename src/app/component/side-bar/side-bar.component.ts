@@ -1,26 +1,26 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AuthService } from "../../service/auth.service";
 import { Router } from "@angular/router";
 import { ProjectService } from "../../service/project.service";
+import { StorageService } from "../../service/storage.service";
+import { HttpResponse } from "@angular/common/http";
 
 @Component({
   selector: 'app-side-bar',
   templateUrl: './side-bar.component.html',
   styleUrls: ['./side-bar.component.css']
 })
-export class SideBarComponent {
+export class SideBarComponent implements OnInit {
 
   projects: any[] | null = [];
   fullName: string = '';
   email: string = '';
 
-  constructor(public authService: AuthService, public projectService: ProjectService, private router: Router) {
-    const user = JSON.parse(localStorage.getItem('loggedUser')!);
-    if (user) {
-      this.fullName = user.fullName;
-      this.email = user.email;
-      this.buildProjectList()
-    }
+  constructor(public authService: AuthService, public projectService: ProjectService, private storageService: StorageService, private router: Router) {}
+
+  ngOnInit(): void {
+    this.buildProjectList();
+    console.log('projects', this.projects);
   }
 
   logout() {
@@ -34,10 +34,16 @@ export class SideBarComponent {
   }
 
   buildProjectList() {
-    console.log('Getting projects by user email: ' + this.email);
-    this.projectService.getProjectsByUserEmail(this.email).subscribe(response => {
-      this.projects = response.body;
+    const user = this.storageService.getUser();
+    console.log('user', user);
+    this.projectService.getProjectsByUserEmail(user.email).subscribe(response => {
+      // @ts-ignore
+      this.projects = response;
     });
+  }
+
+  loadProject(projectId: string) {
+    this.projectService.setSelectedProject(projectId);
   }
 
 }

@@ -1,11 +1,13 @@
 #myDiagramDiv {
-  width: calc(100vw - 20vw) !important;
-  height: calc(100vh - 90px) !important;
+  height: 100vh;
   border: 1px solid black;
   background-color: lightgrey;
-  margin-left: 250px;
 }
 
-.margin-left {
-  margin-left: 250px;
+.palette {
+  flex-direction: column;
+}
+
+.col-fixed {
+  padding: 0 !important;
 }

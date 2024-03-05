@@ -1,24 +1,11 @@
-<div id="sample">
-  <div id="myDiagramDiv" [style.backgroundColor]="darkMode ? '#242424' : 'white'"
-       style="border: solid 1px black; width: 700px; height: 700px"></div>
-  <button (click)="toggleDarkMode()" class="margin-left">
-    {{ darkMode ? 'Light Mode' : 'Dark Mode' }}
-  </button>
-  <button (click)="addEntity()">
-    Add Entity
-  </button>
+<div class="grid">
+  <div class="palette flex col-fixed justify-content-around align-items-center" style="width: 4vw">
+    <p-button icon="pi pi-table"></p-button>
+    <p-button icon="pi pi-link" (click)="selectRelationshipType('1:1')"></p-button>
+    <p-button icon="pi pi-link" (click)="selectRelationshipType('1:n')"></p-button>
+    <p-button icon="pi pi-link" (click)="selectRelationshipType('n:n')"></p-button>
+  </div>
+  <div class="col-fixed" style="width: 76vw">
+    <div id="myDiagramDiv" [style.backgroundColor]="darkMode ? '#242424' : 'white'"></div>
+  </div>
 </div>
-<div class="margin-left">
-  <button (click)="selectRelationshipType('1:1')">1:1</button>
-  <button (click)="selectRelationshipType('1:n')">1:N</button>
-  <button (click)="selectRelationshipType('n:n')">N:N</button>
-</div>
-<div class="margin-left">
-  <button (click)="sendToServer()">Save</button>
-</div>
-
-<app-table-editor *ngIf="showTableEditor"
-                  [entity]="selectedEntity"
-                  (onSave)="handleSave($event)"
-                  (onClose)="handleClose()"
-                  class="margin-left"></app-table-editor>

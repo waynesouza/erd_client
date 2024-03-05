@@ -5,7 +5,7 @@ import { DiagramComponent } from "./diagram/diagram.component";
 import { RegisterComponent } from "./component/register/register.component";
 
 const routes: Routes = [
-  {path: '', redirectTo: '/login', pathMatch: 'full'},
+  {path: '', redirectTo: '/diagram', pathMatch: 'full'},
   {path: 'login', component: LoginComponent},
   {path: 'register', component: RegisterComponent},
   {path: 'diagram', component: DiagramComponent}

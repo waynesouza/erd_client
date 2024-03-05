@@ -7,6 +7,7 @@ import * as stomp from 'stompjs';
 import { DiagramService } from "../service/diagram.service";
 import { DiagramModel } from '../model/diagram.model';
 import { EntityModel } from "../model/entity.model";
+import { ProjectService } from "../service/project.service";
 
 const $ = go.GraphObject.make;
 
@@ -25,15 +26,15 @@ export class DiagramComponent implements OnInit {
   selectedEntity: any = {};
   selectedRelationshipType: '1:1' | '1:n' | 'n:n' | null = null;
   selectedEntities: any[] = [];
+  projectId: string = '';
   // @ts-ignore
   public diagram: go.Diagram = null;
 
   private stompClient: any;
 
-  constructor(private diagramService: DiagramService) { }
+  constructor(private diagramService: DiagramService, private projectService: ProjectService) { }
 
   ngOnInit(): void {
-    const projectId = '04c09597-5338-43cd-81b3-02f480d9af09';
     const socket = new sockjs('http://localhost:8080/api/send');
     this.stompClient = stomp.over(socket);
 
@@ -44,17 +45,22 @@ export class DiagramComponent implements OnInit {
       });
     });
 
-    this.diagramService.getDiagram(projectId).subscribe({
-      next: (diagramData: DiagramModel) => {
-        this.locations = diagramData.nodeDataArray.map((entity: EntityModel) => {
-          return new go.Point(Number(entity.location.x), Number(entity.location.y));
+    this.projectService.getSelectedProject().subscribe(projectId => {
+      if (projectId) {
+        this.projectId = projectId;
+        this.diagramService.getDiagram(projectId).subscribe({
+          next: (diagramData: DiagramModel) => {
+            this.locations = diagramData.nodeDataArray.map((entity: EntityModel) => {
+              return new go.Point(Number(entity.location.x), Number(entity.location.y));
+            });
+            this.entities = diagramData.nodeDataArray;
+            this.relationships = diagramData.linkDataArray;
+            this.initializeDiagram();
+            this.remakeDiagram();
+          }, error: () => {
+            this.initializeDiagram();
+          }
         });
-        this.entities = diagramData.nodeDataArray;
-        this.relationships = diagramData.linkDataArray;
-        this.initializeDiagram();
-        this.remakeDiagram();
-      }, error: () => {
-        this.initializeDiagram();
       }
     });
   }
@@ -321,11 +327,9 @@ export class DiagramComponent implements OnInit {
     const message = JSON.stringify({
       nodeDataArray: this.entities,
       linkDataArray: this.relationships,
-      projectId: '04c09597-5338-43cd-81b3-02f480d9af09',
+      projectId: this.projectId,
       darkMode: this.darkMode
     });
-
-    console.log('Sending message to server:', message);
 
     if (this.stompClient && this.stompClient.connected) {
       this.stompClient.send('/app/send', {}, message);
