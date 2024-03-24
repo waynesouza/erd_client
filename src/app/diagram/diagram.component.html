@@ -1,11 +1,24 @@
-<div class="grid">
-  <div class="palette flex col-fixed justify-content-around align-items-center" style="width: 4vw">
-    <p-button icon="pi pi-table"></p-button>
-    <p-button icon="pi pi-link" (click)="selectRelationshipType('1:1')"></p-button>
-    <p-button icon="pi pi-link" (click)="selectRelationshipType('1:n')"></p-button>
-    <p-button icon="pi pi-link" (click)="selectRelationshipType('n:n')"></p-button>
-  </div>
-  <div class="col-fixed" style="width: 76vw">
-    <div id="myDiagramDiv" [style.backgroundColor]="darkMode ? '#242424' : 'white'"></div>
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-1 d-flex flex-column justify-content-around align-items-center">
+      <button class="btn btn-primary" type="button" (click)="addEntity()">
+        <i class="pi pi-table"></i>
+      </button>
+      <button class="btn btn-primary" type="button" (click)="addEntity()">
+        <i class="pi pi-link"></i>
+      </button>
+      <button class="btn btn-primary" type="button" (click)="selectRelationshipType('1:n')">
+        <i class="pi pi-link"></i>
+      </button>
+      <button class="btn btn-primary" type="button" (click)="selectRelationshipType('n:n')">
+        <i class="pi pi-link"></i>
+      </button>
+      <button class="btn btn-primary" type="button" (click)="sendToServer()">
+        <i class="pi pi-check"></i>
+      </button>
+    </div>
+    <div class="col-11" style="height: 100vh;">
+      <div id="myDiagramDiv" [style.background-color]="darkMode ? '#242424' : 'white'"></div>
+    </div>
   </div>
 </div>

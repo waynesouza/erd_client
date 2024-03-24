@@ -15,12 +15,17 @@ export class SideBarComponent implements OnInit {
   projects: any[] | null = [];
   fullName: string = '';
   email: string = '';
+  isExpanded = false;
 
   constructor(public authService: AuthService, public projectService: ProjectService, private storageService: StorageService, private router: Router) {}
 
   ngOnInit(): void {
     this.buildProjectList();
     console.log('projects', this.projects);
+  }
+
+  toggleMenu(): void {
+    this.isExpanded = !this.isExpanded;
   }
 
   logout() {

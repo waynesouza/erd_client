@@ -10,11 +10,7 @@ import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { JwtInterceptor } from './interceptor/jwt.interceptor';
 import { LoginComponent } from './component/login/login.component';
 import { RegisterComponent } from './component/register/register.component';
-import { InputTextModule } from 'primeng/inputtext';
-import { ButtonModule } from 'primeng/button';
-import { PasswordModule } from 'primeng/password';
 import { SideBarComponent } from './component/side-bar/side-bar.component';
-import { SidebarModule } from "primeng/sidebar";
 import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
 
 @NgModule({
@@ -29,10 +25,6 @@ import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
   imports: [
     BrowserModule,
     BrowserAnimationsModule,
-    InputTextModule,
-    ButtonModule,
-    PasswordModule,
-    SidebarModule,
     AppRoutingModule,
     FormsModule,
     HttpClientModule

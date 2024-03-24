@@ -4,10 +4,10 @@ import * as go from 'gojs';
 import * as sockjs from 'sockjs-client';
 // @ts-ignore
 import * as stomp from 'stompjs';
-import { DiagramService } from "../service/diagram.service";
+import { DiagramService } from '../service/diagram.service';
 import { DiagramModel } from '../model/diagram.model';
-import { EntityModel } from "../model/entity.model";
-import { ProjectService } from "../service/project.service";
+import { EntityModel } from '../model/entity.model';
+import { ProjectService } from '../service/project.service';
 
 const $ = go.GraphObject.make;
 
@@ -159,45 +159,45 @@ export class DiagramComponent implements OnInit {
         routing: go.Link.AvoidsNodes
       },
       $(go.Shape,
-        {stroke: "#f7f9fc", strokeWidth: 4}),
-      $(go.Panel, "Auto", {segmentIndex: 0, segmentOffset: new go.Point(22, 0)},
-        $(go.Shape, "RoundedRectangle", {fill: "#f7f9fc"}, {stroke: "#eeeeee"}),
-        $(go.TextBlock,  // the "from" label
+        {stroke: '#f7f9fc', strokeWidth: 4}),
+      $(go.Panel, 'Auto', {segmentIndex: 0, segmentOffset: new go.Point(22, 0)},
+        $(go.Shape, 'RoundedRectangle', {fill: '#f7f9fc'}, {stroke: '#eeeeee'}),
+        $(go.TextBlock,  // the 'from' label
           {
-            textAlign: "center",
-            font: "bold 14px sans-serif",
-            stroke: "black",
-            background: "#f7f9fc",
+            textAlign: 'center',
+            font: 'bold 14px sans-serif',
+            stroke: 'black',
+            background: '#f7f9fc',
             segmentOffset: new go.Point(NaN, NaN),
             segmentOrientation: go.Link.OrientUpright
           },
-          new go.Binding("text", "text"))),
-      $(go.Panel, "Auto",
+          new go.Binding('text', 'text'))),
+      $(go.Panel, 'Auto',
         {
           segmentIndex: -1,
           segmentOffset: new go.Point(-13, 0)
         },
-        $(go.Shape, "RoundedRectangle", {fill: "#edf6fc"}, {stroke: "#eeeeee"}),
-        $(go.TextBlock,  // the "to" label
+        $(go.Shape, 'RoundedRectangle', {fill: '#edf6fc'}, {stroke: '#eeeeee'}),
+        $(go.TextBlock,  // the 'to' label
           {
-            textAlign: "center",
-            font: "bold 14px sans-serif",
-            stroke: "black",
+            textAlign: 'center',
+            font: 'bold 14px sans-serif',
+            stroke: 'black',
             segmentIndex: -1,
             segmentOffset: new go.Point(NaN, NaN),
             segmentOrientation: go.Link.OrientUpright
           },
-          new go.Binding("text", "toText")),
-        $(go.Panel, "Auto",
+          new go.Binding('text', 'toText')),
+        $(go.Panel, 'Auto',
           {
             segmentIndex: 0,
             segmentOffset: new go.Point(0, 0),
             segmentOrientation: go.Link.OrientUpright
           },
-          $(go.Shape, "Circle", {fill: "#f7f9fc", stroke: "#eeeeee", width: 16, height: 16}),
-          $(go.TextBlock, "X", {
-            font: "bold 14px sans-serif",
-            stroke: "black",
+          $(go.Shape, 'Circle', {fill: '#f7f9fc', stroke: '#eeeeee', width: 16, height: 16}),
+          $(go.TextBlock, 'X', {
+            font: 'bold 14px sans-serif',
+            stroke: 'black',
             segmentIndex: 0,
             segmentOffset: new go.Point(NaN, NaN),
             segmentOrientation: go.Link.OrientUpright,
@@ -313,7 +313,6 @@ export class DiagramComponent implements OnInit {
   }
 
   receiveMessageAndRemakeDiagram(message: any): void {
-    console.log('Received message from server:', message);
     const data = JSON.parse(message.body);
     this.locations = data.nodeDataArray.map((entity: EntityModel) => {
       return new go.Point(Number(entity.location.x), Number(entity.location.y));

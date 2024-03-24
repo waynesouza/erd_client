@@ -1,22 +1,26 @@
-<div>
+<div class="container">
   <form>
-    <div class="table-header">
-      <input type="text" [(ngModel)]="entity.key" placeholder="Table Name" name="tableName" required>
+    <div class="form-group">
+      <label for="tableName">Table Name</label>
+      <input type="text" class="form-control" id="tableName" [(ngModel)]="entity.key" placeholder="Table Name" name="tableName" required>
     </div>
-    <div class="table-body">
-
-      <div *ngFor="let column of entity.items; let i = index">
-        <input type="text" [(ngModel)]="column.name" [name]="'columnName-' + i" placeholder="Column Name" required>
-        <select [(ngModel)]="column.type" [name]="'columnType-' + i" required>
+    <div *ngFor="let column of entity.items; let i = index">
+      <div class="form-group">
+        <label for="'columnName-' + i">Column Name</label>
+        <input type="text" class="form-control" id="'columnName-' + i" [(ngModel)]="column.name" [name]="'columnName-' + i" placeholder="Column Name" required>
+      </div>
+      <div class="form-group">
+        <label for="'columnType-' + i">Column Type</label>
+        <select class="form-control" id="'columnType-' + i" [(ngModel)]="column.type" [name]="'columnType-' + i" required>
           <option value="string">String</option>
           <option value="number">Number</option>
           <option value="boolean">Boolean</option>
           <option value="date">Date</option>
         </select>
-        <button (click)="removeColumn(i)">Remove</button>
       </div>
-      <button (click)="addColumn()">Add Column</button>
-      <button (click)="saveTable()">Save</button>
+      <button class="btn btn-danger" (click)="removeColumn(i)">Remove</button>
     </div>
+    <button class="btn btn-primary" (click)="addColumn()">Add Column</button>
+    <button class="btn btn-success" (click)="saveTable()">Save</button>
   </form>
 </div>

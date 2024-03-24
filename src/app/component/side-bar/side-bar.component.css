@@ -1,14 +1,20 @@
 .sidebar {
-  left: 0;
-  top: 0;
-  bottom: 0;
+  background-color: #f8f9fa;
+  border-right: 1px solid #ddd;
+  padding: 20px;
   height: 100vh;
-  background-color: #f2f2f2;
+  overflow: auto;
+  background-color: gray;
+  &.is-expanded {
+    width: 200px;
+  }
+  &:not(.is-expanded) {
+    width: 50px;
+  }
 }
-
-.project-title {
-  background-color: #4a6284;
-  color: white;
-  padding: 10px 0;
-  text-align: center;
+.toggle-button {
+  position: absolute;
+  top: 50%;
+  right: -25px;
+  transform: translateY(-50%);
 }
