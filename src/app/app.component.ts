@@ -3,7 +3,7 @@ import { Subscription } from 'rxjs';
 import { StorageService } from './service/storage.service';
 import { AuthService } from './service/auth.service';
 import { EventBusService } from './shared/event-bus.service';
-import { Router } from "@angular/router";
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-root',
@@ -11,8 +11,8 @@ import { Router } from "@angular/router";
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  isLoggedIn = false;
 
+  isLoggedIn = false;
   eventBusSub?: Subscription;
 
   constructor(private storageService: StorageService, private authService: AuthService,

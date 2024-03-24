@@ -7,7 +7,7 @@ import * as stomp from 'stompjs';
 import { DiagramService } from '../service/diagram.service';
 import { DiagramModel } from '../model/diagram.model';
 import { EntityModel } from '../model/entity.model';
-import { ProjectService } from '../service/project.service';
+import { SharedService } from '../service/shared.service';
 
 const $ = go.GraphObject.make;
 
@@ -19,6 +19,7 @@ const $ = go.GraphObject.make;
 export class DiagramComponent implements OnInit {
 
   @Input() entities: EntityModel[] = [];
+  @Input() selectedProjectId: string = '';
   relationships: any[] = [];
   locations: go.Point[] = [];
   darkMode: boolean = false;
@@ -32,7 +33,7 @@ export class DiagramComponent implements OnInit {
 
   private stompClient: any;
 
-  constructor(private diagramService: DiagramService, private projectService: ProjectService) { }
+  constructor(private diagramService: DiagramService, private sharedService: SharedService) { }
 
   ngOnInit(): void {
     const socket = new sockjs('http://localhost:8080/api/send');
@@ -45,7 +46,7 @@ export class DiagramComponent implements OnInit {
       });
     });
 
-    this.projectService.getSelectedProject().subscribe(projectId => {
+    this.sharedService.currentProjectId.subscribe(projectId => {
       if (projectId) {
         this.projectId = projectId;
         this.diagramService.getDiagram(projectId).subscribe({

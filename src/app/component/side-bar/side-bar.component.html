@@ -5,4 +5,8 @@
       <li *ngFor="let project of projects" (click)="loadProject(project.id)">{{ project.name }}</li>
     </ul>
   </div>
+  <div class="text-center">
+    <button class="btn btn-primary" (click)="openModal()">Create Project</button>
+    <app-create-project-modal *ngIf="isModalOpen" (close)="closeModal()"></app-create-project-modal>
+  </div>
 </div>

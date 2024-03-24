@@ -6,6 +6,7 @@ import { EventData } from './event.class';
   providedIn: 'root'
 })
 export class EventBusService {
+
   private subject = new Subject<EventData>();
 
   constructor() { }

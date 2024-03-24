@@ -11,7 +11,8 @@ import { JwtInterceptor } from './interceptor/jwt.interceptor';
 import { LoginComponent } from './component/login/login.component';
 import { RegisterComponent } from './component/register/register.component';
 import { SideBarComponent } from './component/side-bar/side-bar.component';
-import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
+import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { CreateProjectModalComponent } from './component/modal/create-project-modal/create-project-modal.component';
 
 @NgModule({
   declarations: [
@@ -21,6 +22,7 @@ import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
     LoginComponent,
     RegisterComponent,
     SideBarComponent,
+    CreateProjectModalComponent,
   ],
   imports: [
     BrowserModule,
@@ -32,5 +34,4 @@ import { BrowserAnimationsModule } from "@angular/platform-browser/animations";
   providers: [{provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true}],
   bootstrap: [AppComponent]
 })
-export class AppModule {
-}
+export class AppModule { }
