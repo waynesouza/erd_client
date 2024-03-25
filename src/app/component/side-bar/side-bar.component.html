@@ -6,7 +6,10 @@
     </ul>
   </div>
   <div class="text-center">
-    <button class="btn btn-primary" (click)="openModal()">Create Project</button>
+    <button class="btn btn-primary" (click)="openModal()">
+      Create Project
+      <i class="bi bi-plus-circle"></i>
+    </button>
     <app-create-project-modal *ngIf="isModalOpen" (close)="closeModal()"></app-create-project-modal>
   </div>
 </div>

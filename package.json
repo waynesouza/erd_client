@@ -19,6 +19,7 @@
     "@angular/platform-browser-dynamic": "^14.0.0",
     "@angular/router": "^14.0.0",
     "bootstrap": "^4.6.1",
+    "bootstrap-icons": "^1.11.3",
     "gojs": "^2.3.14",
     "net": "^1.0.2",
     "rxjs": "~7.5.0",
