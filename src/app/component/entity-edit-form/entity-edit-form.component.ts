@@ -16,6 +16,7 @@ export class EntityEditFormComponent {
     location: new Point(0, 0)
   };
   @Output() entityUpdated = new EventEmitter<EntityModel>();
+  @Output() formClosed = new EventEmitter<void>();
 
   addAttribute() {
     this.entity.items.push({ name: '', type: '', pk: false, unique: false, defaultValue: '', nullable: false, autoIncrement: false });
@@ -23,6 +24,10 @@ export class EntityEditFormComponent {
 
   updateEntity(): void {
     this.entityUpdated.emit(this.entity);
+  }
+
+  closeForm(): void {
+    this.formClosed.emit();
   }
 
 }

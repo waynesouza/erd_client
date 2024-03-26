@@ -18,8 +18,8 @@
       </button>
     </div>
     <div class="col-11" style="height: 100vh;">
-      <div id="myDiagramDiv" [style.background-color]="darkMode ? '#242424' : 'white'"></div>
-      <app-entity-edit-form *ngIf="showTableEditor" [entity]="selectedEntity" (entityUpdated)="handleSave($event)"></app-entity-edit-form>
+      <div id="myDiagramDiv" [ngClass]="{'diagram-small': showTableEditor}" [style.background-color]="darkMode ? '#242424' : 'white'"></div>
+      <app-entity-edit-form *ngIf="showTableEditor" [entity]="selectedEntity" (entityUpdated)="handleSave($event)" (formClosed)="handleClose()"></app-entity-edit-form>
     </div>
   </div>
 </div>

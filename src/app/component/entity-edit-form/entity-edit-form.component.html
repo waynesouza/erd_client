@@ -1,16 +1,17 @@
-<div>
-  <label>
-    Entity Name:
-    <input [(ngModel)]="entity.key" type="text">
-  </label>
-  <div *ngFor="let item of entity.items; let i = index">
-    <label>
-      Attribute {{i + 1}} Name:
-      <input [(ngModel)]="item.name" type="text">
-    </label>
-    <label>
-      Type:
-      <select [(ngModel)]="item.type">
+<div class="container">
+  <button class="btn btn-danger float-right" (click)="closeForm()">X</button>
+  <div class="form-group">
+    <label for="entityName">Entity Name:</label>
+    <input id="entityName" class="form-control" [(ngModel)]="entity.key" type="text">
+  </div>
+  <div *ngFor="let item of entity.items; let i = index" class="attribute-border">
+    <div class="form-group">
+      <label for="attributeName{{i}}">Attribute {{i + 1}} Name:</label>
+      <input id="attributeName{{i}}" class="form-control" [(ngModel)]="item.name" type="text">
+    </div>
+    <div class="form-group">
+      <label for="type{{i}}">Type:</label>
+      <select id="type{{i}}" class="form-control" [(ngModel)]="item.type">
         <option value="int">int</option>
         <option value="varchar">varchar</option>
         <option value="text">text</option>
@@ -20,28 +21,30 @@
         <option value="boolean">boolean</option>
         <!-- Add more options as needed -->
       </select>
-    </label>
-    <label>
-      PK:
-      <input [(ngModel)]="item.pk" type="checkbox">
-    </label>
-    <label>
-      Unique:
-      <input [(ngModel)]="item.unique" type="checkbox">
-    </label>
-    <label>
-      Default Value:
-      <input [(ngModel)]="item.defaultValue" type="text">
-    </label>
-    <label>
-      Nullable:
-      <input [(ngModel)]="item.nullable" type="checkbox">
-    </label>
-    <label>
-      Auto Increment:
-      <input [(ngModel)]="item.autoIncrement" type="checkbox">
-    </label>
+    </div>
+    <div class="form-group">
+      <label for="defaultValue{{i}}">Default Value:</label>
+      <input id="defaultValue{{i}}" class="form-control" [(ngModel)]="item.defaultValue" type="text">
+    </div>
+    <div class="row">
+      <div class="col form-check">
+        <input id="pk{{i}}" class="form-check-input" [(ngModel)]="item.pk" type="checkbox">
+        <label class="form-check-label" for="pk{{i}}">PK</label>
+      </div>
+      <div class="col form-check">
+        <input id="unique{{i}}" class="form-check-input" [(ngModel)]="item.unique" type="checkbox">
+        <label class="form-check-label" for="unique{{i}}">Unique</label>
+      </div>
+      <div class="col form-check">
+        <input id="nullable{{i}}" class="form-check-input" [(ngModel)]="item.nullable" type="checkbox">
+        <label class="form-check-label" for="nullable{{i}}">Nullable</label>
+      </div>
+      <div class="col form-check">
+        <input id="autoIncrement{{i}}" class="form-check-input" [(ngModel)]="item.autoIncrement" type="checkbox">
+        <label class="form-check-label" for="autoIncrement{{i}}">Auto Increment</label>
+      </div>
+    </div>
   </div>
-  <button (click)="addAttribute()">Add Attribute</button>
-  <button (click)="updateEntity()">Update Entity</button>
+  <button class="btn btn-primary" (click)="addAttribute()">Add Attribute</button>
+  <button class="btn btn-success" (click)="updateEntity()">Update Entity</button>
 </div>
