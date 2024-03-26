@@ -1,0 +1,47 @@
+<div>
+  <label>
+    Entity Name:
+    <input [(ngModel)]="entity.key" type="text">
+  </label>
+  <div *ngFor="let item of entity.items; let i = index">
+    <label>
+      Attribute {{i + 1}} Name:
+      <input [(ngModel)]="item.name" type="text">
+    </label>
+    <label>
+      Type:
+      <select [(ngModel)]="item.type">
+        <option value="int">int</option>
+        <option value="varchar">varchar</option>
+        <option value="text">text</option>
+        <option value="date">date</option>
+        <option value="datetime">datetime</option>
+        <option value="float">float</option>
+        <option value="boolean">boolean</option>
+        <!-- Add more options as needed -->
+      </select>
+    </label>
+    <label>
+      PK:
+      <input [(ngModel)]="item.pk" type="checkbox">
+    </label>
+    <label>
+      Unique:
+      <input [(ngModel)]="item.unique" type="checkbox">
+    </label>
+    <label>
+      Default Value:
+      <input [(ngModel)]="item.defaultValue" type="text">
+    </label>
+    <label>
+      Nullable:
+      <input [(ngModel)]="item.nullable" type="checkbox">
+    </label>
+    <label>
+      Auto Increment:
+      <input [(ngModel)]="item.autoIncrement" type="checkbox">
+    </label>
+  </div>
+  <button (click)="addAttribute()">Add Attribute</button>
+  <button (click)="updateEntity()">Update Entity</button>
+</div>

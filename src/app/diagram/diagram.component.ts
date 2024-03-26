@@ -235,6 +235,7 @@ export class DiagramComponent implements OnInit {
     });
   }
 
+  // Entity editor
   showTableEditorModal(entity: any): void {
     this.selectedEntity = entity;
     this.showTableEditor = true;
