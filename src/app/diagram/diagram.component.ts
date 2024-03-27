@@ -212,6 +212,7 @@ export class DiagramComponent implements OnInit {
     this.diagram.nodeTemplate.doubleClick = (e, node) => {
       // @ts-ignore
       const clickedNode = node.part.data;
+      console.log('Node double clicked:', clickedNode);
       this.showTableEditorModal(clickedNode);
     }
   }
@@ -248,8 +249,7 @@ export class DiagramComponent implements OnInit {
     const oldKey = this.entities[index].key;
     const newKey = entity.key;
 
-    this.entities[index].items = entity.items;
-    this.entities[index].key = newKey;
+    this.entities[index] = entity;
 
     this.relationships.forEach((relationship) => {
       if (relationship.from === oldKey) {
@@ -260,6 +260,16 @@ export class DiagramComponent implements OnInit {
       }
     });
 
+    this.diagram.model = new go.GraphLinksModel({
+      nodeDataArray: this.entities,
+      linkDataArray: this.relationships
+    });
+  }
+
+  handleRemove(id: string): void {
+    this.showTableEditor = false;
+    this.entities = this.entities.filter(e => e.id !== id);
+    this.relationships = this.relationships.filter(r => r.from !== id && r.to !== id);
     this.diagram.model = new go.GraphLinksModel({
       nodeDataArray: this.entities,
       linkDataArray: this.relationships
