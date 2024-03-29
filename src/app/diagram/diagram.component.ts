@@ -8,6 +8,8 @@ import { DiagramService } from '../service/diagram.service';
 import { DiagramModel } from '../model/diagram.model';
 import { EntityModel } from '../model/entity.model';
 import { SharedService } from '../service/shared.service';
+import { IntermediaryEntityModel } from "../model/intermediary-entity.model";
+import { AttributeModel } from "../model/attribute.model";
 
 const $ = go.GraphObject.make;
 
@@ -25,7 +27,7 @@ export class DiagramComponent implements OnInit {
   darkMode: boolean = false;
   showTableEditor: boolean = false;
   selectedEntity: any = {};
-  selectedRelationshipType: '1:1' | '1:n' | 'n:n' | null = null;
+  selectedRelationshipType: '1:1' | '1:N' | 'N:N' | null = null;
   selectedEntities: any[] = [];
   projectId: string = '';
   // @ts-ignore
@@ -268,6 +270,17 @@ export class DiagramComponent implements OnInit {
 
   handleRemove(id: string): void {
     this.showTableEditor = false;
+    const removedEntity = this.entities.find(e => e.id === id);
+
+    if (removedEntity) {
+      this.entities.forEach(entity => {
+        const fkIndex = entity.items.findIndex(item => item.name === `${removedEntity.key}_id`);
+        if (fkIndex !== -1) {
+          entity.items.splice(fkIndex, 1);
+        }
+      });
+    }
+
     this.entities = this.entities.filter(e => e.id !== id);
     this.relationships = this.relationships.filter(r => r.from !== id && r.to !== id);
     this.diagram.model = new go.GraphLinksModel({
@@ -280,25 +293,96 @@ export class DiagramComponent implements OnInit {
     this.showTableEditor = false;
   }
 
-  selectRelationshipType(type: '1:1' | '1:n' | 'n:n'): void {
+  selectRelationshipType(type: '1:1' | '1:N' | 'N:N'): void {
     this.selectedRelationshipType = type;
     this.selectedEntities = [];
   }
 
   entityClicked(entity: any): void {
-
     if (this.selectedRelationshipType && this.selectedEntities.length < 2) {
       this.selectedEntities.push(entity);
     }
-    if (this.selectedEntities.length === 2) {
-      const linkData = {
-        from: this.selectedEntities[0].key,
-        to: this.selectedEntities[1].key,
-        text: this.selectedRelationshipType,
-        toText: 1,
-      };
 
-      this.createRelationship(linkData);
+    if (this.selectedEntities.length === 2) {
+      if (this.selectedRelationshipType === 'N:N') {
+        const firstForeignKey: AttributeModel = {
+          name: `${this.selectedEntities[0].key}_id`,
+          // @ts-ignore
+          type: this.selectedEntities[0].items.filter(item => item.pk)[0].type,
+          pk: false,
+          fk: true,
+          unique: false,
+          defaultValue: '',
+          nullable: false,
+          autoIncrement: false
+        };
+
+        const secondForeignKey: AttributeModel = {
+          name: `${this.selectedEntities[1].key}_id`,
+          // @ts-ignore
+          type: this.selectedEntities[1].items.filter(item => item.pk)[0].type,
+          pk: false,
+          fk: true,
+          unique: false,
+          defaultValue: '',
+          nullable: false,
+          autoIncrement: false
+        };
+
+        const newIntermediaryEntity: IntermediaryEntityModel = {
+          id: crypto.randomUUID(),
+          key: `${this.selectedEntities[0].key}_${this.selectedEntities[1].key}`,
+          items: [firstForeignKey, secondForeignKey],
+          location: new go.Point(Math.random() * 400, Math.random() * 400),
+          firstEntityId: this.selectedEntities[0].key,
+          secondEntityId: this.selectedEntities[1].key
+        };
+
+        this.entities.push(newIntermediaryEntity);
+
+        const firstLinkData = {
+          from: this.selectedEntities[0].key,
+          to: newIntermediaryEntity.key,
+          text: '1:N',
+          toText: 1,
+        };
+
+        const secondLinkData = {
+          from: newIntermediaryEntity.key,
+          to: this.selectedEntities[1].key,
+          text: '1:N',
+          toText: 1,
+        };
+
+        this.createRelationship(firstLinkData);
+        this.createRelationship(secondLinkData);
+
+        this.remakeDiagram();
+      } else {
+        const foreignKeyAttribute: AttributeModel = {
+          name: `${this.selectedEntities[1].key}_id`,
+          // @ts-ignore
+          type: this.selectedEntities[1].items.filter(item => item.pk)[0].type,
+          pk: false,
+          fk: true,
+          unique: false,
+          defaultValue: '',
+          nullable: false,
+          autoIncrement: false
+        };
+
+        this.selectedEntities[0].items.push(foreignKeyAttribute);
+
+        const linkData = {
+          from: this.selectedEntities[0].key,
+          to: this.selectedEntities[1].key,
+          text: this.selectedRelationshipType,
+          toText: 1,
+        };
+
+        this.createRelationship(linkData);
+      }
+
       this.selectedRelationshipType = null;
     }
   }
@@ -310,7 +394,18 @@ export class DiagramComponent implements OnInit {
   }
 
   removeRelationship(): void {
-    this.relationships.pop();
+    const relationshipToRemove = this.relationships.pop();
+
+    if (relationshipToRemove.text === '1:1' || relationshipToRemove.text === '1:N') {
+      const entity = this.entities.find(e => e.key === relationshipToRemove.from);
+      if (entity) {
+        const fkIndex = entity.items.findIndex(item => item.name === `${relationshipToRemove.to}_id`);
+        if (fkIndex !== -1) {
+          entity.items.splice(fkIndex, 1);
+        }
+      }
+    }
+
     this.remakeDiagram();
   }
 

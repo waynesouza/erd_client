@@ -20,7 +20,7 @@ export class EntityEditFormComponent {
   @Output() formClosed = new EventEmitter<void>();
 
   addAttribute() {
-    this.entity.items.push({ name: '', type: '', pk: false, unique: false, defaultValue: '', nullable: false, autoIncrement: false });
+    this.entity.items.push({ name: '', type: '', pk: false, fk: false, unique: false, defaultValue: '', nullable: false, autoIncrement: false });
   }
 
   removeAttribute(index: number): void {
