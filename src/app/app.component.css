@@ -1,9 +1,3 @@
-.grid {
-  margin-top: 0 !important;
-  margin-right: 0 !important;
-  margin-left: 0 !important;
-}
-
-.col-fixed {
-  padding: 0 !important;
+.sidebar-width {
+  width: 15vw;
 }

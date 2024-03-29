@@ -1,5 +1,5 @@
 <div class="bg-light" *ngIf="!isLoginOrRegisterRoute()">
-  <div class="project-title bg-primary text-white py-2 text-center">Projects</div>
+  <div class="project-title bg-primary text-white text-center">Projects</div>
   <div>
     <ul>
       <li *ngFor="let project of projects" (click)="loadProject(project.id)">{{ project.name }}</li>
