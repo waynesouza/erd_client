@@ -10,6 +10,7 @@ import { EntityModel } from '../model/entity.model';
 import { SharedService } from '../service/shared.service';
 import { IntermediaryEntityModel } from "../model/intermediary-entity.model";
 import { AttributeModel } from "../model/attribute.model";
+import { DiagramEventName } from "gojs";
 
 const $ = go.GraphObject.make;
 
@@ -26,6 +27,7 @@ export class DiagramComponent implements OnInit {
   locations: go.Point[] = [];
   darkMode: boolean = false;
   showTableEditor: boolean = false;
+  selectedItem: any = null;
   selectedEntity: any = {};
   selectedRelationshipType: '1:1' | '1:N' | 'N:N' | null = null;
   selectedEntities: any[] = [];
@@ -92,6 +94,7 @@ export class DiagramComponent implements OnInit {
         shadowOffset: new go.Point(4, 4),
         shadowColor: '#919cab',
         click: (e, node) => {
+          console.log(node);
           // @ts-ignore
           this.entityClicked(node.part.data);
         }
@@ -198,25 +201,55 @@ export class DiagramComponent implements OnInit {
             segmentOrientation: go.Link.OrientUpright
           },
           $(go.Shape, 'Circle', {fill: '#f7f9fc', stroke: '#eeeeee', width: 16, height: 16}),
-          $(go.TextBlock, 'X', {
-            font: 'bold 14px sans-serif',
-            stroke: 'black',
-            segmentIndex: 0,
-            segmentOffset: new go.Point(NaN, NaN),
-            segmentOrientation: go.Link.OrientUpright,
-            click: () => {
-              this.removeRelationship();
-            }
-          })
+          // $(go.TextBlock, 'X', {
+          //   font: 'bold 14px sans-serif',
+          //   stroke: 'black',
+          //   segmentIndex: 0,
+          //   segmentOffset: new go.Point(NaN, NaN),
+          //   segmentOrientation: go.Link.OrientUpright,
+          //   click: () => {
+          //     this.removeRelationship();
+          //   }
+          // })
         )),
     );
 
     this.diagram.nodeTemplate.doubleClick = (e, node) => {
       // @ts-ignore
       const clickedNode = node.part.data;
-      console.log('Node double clicked:', clickedNode);
       this.showTableEditorModal(clickedNode);
     }
+
+    // Event listener for clicking on the entity (node)
+    // this.diagram.nodeTemplate.click = (e, node) => {
+    //   // @ts-ignore
+    //   this.selectedItem = node.part.data;
+    // }
+
+    // Event listener for clicking on the relationship (link)
+    this.diagram.linkTemplate.click = (e, link) => {
+      // @ts-ignore
+      this.selectedItem = link.part.data;
+    }
+
+    // Event listener for pressing the delete key
+    this.diagram.commandHandler.deleteSelection = () => {
+      let selection = this.diagram.selection;
+
+      selection.each((part) => {
+        if (part instanceof go.Node) {
+          this.handleRemove(part.data.id);
+        } else if (part instanceof go.Link) {
+          // Aqui você tem acesso ao link que está sendo excluído
+          console.log(part.data); // Isto irá imprimir os dados do link
+          //this.removeRelationship(part.data);
+        } else {
+          return;
+        }
+      });
+
+      go.CommandHandler.prototype.deleteSelection.call(this.diagram.commandHandler);
+    };
   }
 
   toggleDarkMode(): void {
@@ -299,6 +332,7 @@ export class DiagramComponent implements OnInit {
   }
 
   entityClicked(entity: any): void {
+    console.log(this.selectedEntities);
     if (this.selectedRelationshipType && this.selectedEntities.length < 2) {
       this.selectedEntities.push(entity);
     }
@@ -341,6 +375,7 @@ export class DiagramComponent implements OnInit {
         this.entities.push(newIntermediaryEntity);
 
         const firstLinkData = {
+          id: crypto.randomUUID(),
           from: this.selectedEntities[0].key,
           to: newIntermediaryEntity.key,
           text: '1:N',
@@ -348,6 +383,7 @@ export class DiagramComponent implements OnInit {
         };
 
         const secondLinkData = {
+          id: crypto.randomUUID(),
           from: newIntermediaryEntity.key,
           to: this.selectedEntities[1].key,
           text: '1:N',
@@ -374,6 +410,7 @@ export class DiagramComponent implements OnInit {
         this.selectedEntities[0].items.push(foreignKeyAttribute);
 
         const linkData = {
+          id: crypto.randomUUID(),
           from: this.selectedEntities[0].key,
           to: this.selectedEntities[1].key,
           text: this.selectedRelationshipType,
@@ -393,8 +430,13 @@ export class DiagramComponent implements OnInit {
     this.selectedEntities = [];
   }
 
-  removeRelationship(): void {
-    const relationshipToRemove = this.relationships.pop();
+  removeRelationship(id: string): void {
+    let relationshipToRemove: any = {};
+    const index: number = this.relationships.findIndex(r => r.id === id);
+
+    if (index !== -1) {
+      relationshipToRemove = this.relationships.slice(index, 1)[0];
+    }
 
     if (relationshipToRemove.text === '1:1' || relationshipToRemove.text === '1:N') {
       const entity = this.entities.find(e => e.key === relationshipToRemove.from);
