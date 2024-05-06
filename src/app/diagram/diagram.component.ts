@@ -8,9 +8,9 @@ import { DiagramService } from '../service/diagram.service';
 import { DiagramModel } from '../model/diagram.model';
 import { EntityModel } from '../model/entity.model';
 import { SharedService } from '../service/shared.service';
-import { IntermediaryEntityModel } from "../model/intermediary-entity.model";
-import { AttributeModel } from "../model/attribute.model";
-import { DiagramEventName } from "gojs";
+import { IntermediaryEntityModel } from '../model/intermediary-entity.model';
+import { AttributeModel } from '../model/attribute.model';
+import { LinkDataModel } from '../model/link-data.model';
 
 const $ = go.GraphObject.make;
 
@@ -94,7 +94,6 @@ export class DiagramComponent implements OnInit {
         shadowOffset: new go.Point(4, 4),
         shadowColor: '#919cab',
         click: (e, node) => {
-          console.log(node);
           // @ts-ignore
           this.entityClicked(node.part.data);
         }
@@ -200,49 +199,25 @@ export class DiagramComponent implements OnInit {
             segmentOffset: new go.Point(0, 0),
             segmentOrientation: go.Link.OrientUpright
           },
-          $(go.Shape, 'Circle', {fill: '#f7f9fc', stroke: '#eeeeee', width: 16, height: 16}),
-          // $(go.TextBlock, 'X', {
-          //   font: 'bold 14px sans-serif',
-          //   stroke: 'black',
-          //   segmentIndex: 0,
-          //   segmentOffset: new go.Point(NaN, NaN),
-          //   segmentOrientation: go.Link.OrientUpright,
-          //   click: () => {
-          //     this.removeRelationship();
-          //   }
-          // })
+          $(go.Shape, 'Circle', {fill: '#f7f9fc', stroke: '#eeeeee', width: 16, height: 16})
         )),
     );
 
-    this.diagram.nodeTemplate.doubleClick = (e, node) => {
+    this.diagram.nodeTemplate.doubleClick = (e: go.InputEvent, node: go.GraphObject): void => {
       // @ts-ignore
       const clickedNode = node.part.data;
       this.showTableEditorModal(clickedNode);
     }
 
-    // Event listener for clicking on the entity (node)
-    // this.diagram.nodeTemplate.click = (e, node) => {
-    //   // @ts-ignore
-    //   this.selectedItem = node.part.data;
-    // }
-
-    // Event listener for clicking on the relationship (link)
-    this.diagram.linkTemplate.click = (e, link) => {
-      // @ts-ignore
-      this.selectedItem = link.part.data;
-    }
-
     // Event listener for pressing the delete key
-    this.diagram.commandHandler.deleteSelection = () => {
-      let selection = this.diagram.selection;
+    this.diagram.commandHandler.deleteSelection = () : void => {
+      let selection: go.Set<go.Part> = this.diagram.selection;
 
-      selection.each((part) => {
+      selection.each((part: go.Part): void => {
         if (part instanceof go.Node) {
           this.handleRemove(part.data.id);
         } else if (part instanceof go.Link) {
-          // Aqui você tem acesso ao link que está sendo excluído
-          console.log(part.data); // Isto irá imprimir os dados do link
-          //this.removeRelationship(part.data);
+          this.removeRelationship(part.data.id);
         } else {
           return;
         }
@@ -279,14 +254,14 @@ export class DiagramComponent implements OnInit {
 
   handleSave(entity: any): void {
     this.showTableEditor = false;
-    const index = this.entities.findIndex(e => e.id === entity.id);
+    const index: number = this.entities.findIndex((e: EntityModel) : boolean => e.id === entity.id);
 
-    const oldKey = this.entities[index].key;
+    const oldKey: string = this.entities[index].key;
     const newKey = entity.key;
 
     this.entities[index] = entity;
 
-    this.relationships.forEach((relationship) => {
+    this.relationships.forEach((relationship): void => {
       if (relationship.from === oldKey) {
         relationship.from = newKey;
       }
@@ -295,7 +270,7 @@ export class DiagramComponent implements OnInit {
       }
     });
 
-    this.diagram.model = new go.GraphLinksModel({
+    this.diagram.model = new go.GraphLinksModel( {
       nodeDataArray: this.entities,
       linkDataArray: this.relationships
     });
@@ -303,18 +278,18 @@ export class DiagramComponent implements OnInit {
 
   handleRemove(id: string): void {
     this.showTableEditor = false;
-    const removedEntity = this.entities.find(e => e.id === id);
+    const removedEntity: EntityModel | undefined = this.entities.find((e: EntityModel) : boolean => e.id === id);
 
     if (removedEntity) {
-      this.entities.forEach(entity => {
-        const fkIndex = entity.items.findIndex(item => item.name === `${removedEntity.key}_id`);
+      this.entities.forEach((entity: EntityModel) : void => {
+        const fkIndex: number = entity.items.findIndex((item: AttributeModel) : boolean => item.name === `${removedEntity.key}_id`);
         if (fkIndex !== -1) {
           entity.items.splice(fkIndex, 1);
         }
       });
     }
 
-    this.entities = this.entities.filter(e => e.id !== id);
+    this.entities = this.entities.filter((e: EntityModel) : boolean => e.id !== id);
     this.relationships = this.relationships.filter(r => r.from !== id && r.to !== id);
     this.diagram.model = new go.GraphLinksModel({
       nodeDataArray: this.entities,
@@ -332,7 +307,6 @@ export class DiagramComponent implements OnInit {
   }
 
   entityClicked(entity: any): void {
-    console.log(this.selectedEntities);
     if (this.selectedRelationshipType && this.selectedEntities.length < 2) {
       this.selectedEntities.push(entity);
     }
@@ -374,7 +348,7 @@ export class DiagramComponent implements OnInit {
 
         this.entities.push(newIntermediaryEntity);
 
-        const firstLinkData = {
+        const firstLinkData: LinkDataModel = {
           id: crypto.randomUUID(),
           from: this.selectedEntities[0].key,
           to: newIntermediaryEntity.key,
@@ -382,7 +356,7 @@ export class DiagramComponent implements OnInit {
           toText: 1,
         };
 
-        const secondLinkData = {
+        const secondLinkData: LinkDataModel = {
           id: crypto.randomUUID(),
           from: newIntermediaryEntity.key,
           to: this.selectedEntities[1].key,
@@ -409,7 +383,7 @@ export class DiagramComponent implements OnInit {
 
         this.selectedEntities[0].items.push(foreignKeyAttribute);
 
-        const linkData = {
+        const linkData: LinkDataModel = {
           id: crypto.randomUUID(),
           from: this.selectedEntities[0].key,
           to: this.selectedEntities[1].key,
@@ -435,13 +409,13 @@ export class DiagramComponent implements OnInit {
     const index: number = this.relationships.findIndex(r => r.id === id);
 
     if (index !== -1) {
-      relationshipToRemove = this.relationships.slice(index, 1)[0];
+      relationshipToRemove = this.relationships.splice(index, 1)[0];
     }
 
     if (relationshipToRemove.text === '1:1' || relationshipToRemove.text === '1:N') {
-      const entity = this.entities.find(e => e.key === relationshipToRemove.from);
+      const entity: EntityModel | undefined = this.entities.find((e: EntityModel) : boolean => e.key === relationshipToRemove.from);
       if (entity) {
-        const fkIndex = entity.items.findIndex(item => item.name === `${relationshipToRemove.to}_id`);
+        const fkIndex: number = entity.items.findIndex((item: AttributeModel) : boolean => item.name === `${relationshipToRemove.to}_id`);
         if (fkIndex !== -1) {
           entity.items.splice(fkIndex, 1);
         }
@@ -452,7 +426,7 @@ export class DiagramComponent implements OnInit {
   }
 
   remakeDiagram(): void {
-    this.entities.forEach((entity, index) => {
+    this.entities.forEach((entity: EntityModel, index: number): void => {
       entity.location = this.locations[index];
     });
     this.diagram.model = new go.GraphLinksModel({
@@ -472,7 +446,7 @@ export class DiagramComponent implements OnInit {
   }
 
   sendToServer(): void {
-    const message = JSON.stringify({
+    const message: string = JSON.stringify({
       nodeDataArray: this.entities,
       linkDataArray: this.relationships,
       projectId: this.projectId,
