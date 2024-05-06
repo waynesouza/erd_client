@@ -1,10 +1,8 @@
-<div class="grid h-screen" style="height: 100vh;">
-  <div class="row">
-    <div class="col-2">
-      <app-side-bar></app-side-bar>
-    </div>
-    <div class="col-10">
-      <router-outlet></router-outlet>
-    </div>
+<div class="d-flex">
+  <div class="sidebar-width">
+    <app-side-bar></app-side-bar>
+  </div>
+  <div class="flex-grow-1">
+    <router-outlet></router-outlet>
   </div>
 </div>
