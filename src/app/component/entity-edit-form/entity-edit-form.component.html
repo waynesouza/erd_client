@@ -1,54 +1,74 @@
-<div class="scrollable-container">
-  <div class="container small-font">
-    <button class="btn btn-danger float-right" (click)="closeForm()">X</button>
-    <div class="form-group">
-      <label for="entityName">Entity Name:</label>
-      <input id="entityName" class="form-control" [(ngModel)]="entity.key" type="text">
-      <button class="btn btn-danger" (click)="removeEntity()">
-        <i class="bi bi-trash"></i>
-      </button>
-    </div>
-    <table class="table">
-      <thead>
-      <tr>
-        <th>Name</th>
-        <th>Type</th>
-        <th>PK</th>
-        <th>UN</th>
-        <th>NN</th>
-        <th>AI</th>
-        <th>Default Value</th>
-        <th>Actions</th>
-      </tr>
-      </thead>
-      <tbody>
-      <tr *ngFor="let item of entity.items; let i = index">
-        <td><input class="form-control" [(ngModel)]="item.name" type="text"></td>
-        <td>
-          <select class="form-control" [(ngModel)]="item.type">
-            <option value="int">int</option>
-            <option value="varchar">varchar</option>
-            <option value="text">text</option>
-            <option value="date">date</option>
-            <option value="datetime">datetime</option>
-            <option value="float">float</option>
-            <option value="boolean">boolean</option>
-          </select>
-        </td>
-        <td><input [(ngModel)]="item.pk" type="checkbox"></td>
-        <td><input [(ngModel)]="item.unique" type="checkbox"></td>
-        <td><input [(ngModel)]="item.nullable" type="checkbox"></td>
-        <td><input [(ngModel)]="item.autoIncrement" type="checkbox"></td>
-        <td><input class="form-control" [(ngModel)]="item.defaultValue" type="text"></td>
-        <td>
-          <button class="btn btn-danger" (click)="removeAttribute(i)">
-            <i class="bi bi-trash"></i>
+<div class="modal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Entity</h5>
+        <button type="button" class="btn btn-close" (click)="closeModal()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    <div class="modal-body">
+      <div class="form-group row">
+        <label for="entityName" class="col-sm-2 col-form-label">Entity Name:</label>
+        <div class="col-sm-10">
+          <input id="entityName" class="form-control" [(ngModel)]="entity.key" type="text">
+        </div>
+      </div>
+      <table class="table">
+        <thead>
+        <tr>
+          <th>Name</th>
+          <th>Type</th>
+          <th>PK</th>
+          <th>UN</th>
+          <th>NN</th>
+          <th>AI</th>
+          <th>Default Value</th>
+          <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr *ngFor="let item of entity.items; let i = index">
+          <td><input class="form-control" [(ngModel)]="item.name" type="text"></td>
+          <td>
+            <select class="form-control" [(ngModel)]="item.type">
+              <option value="int">int</option>
+              <option value="varchar">varchar</option>
+              <option value="text">text</option>
+              <option value="date">date</option>
+              <option value="datetime">datetime</option>
+              <option value="float">float</option>
+              <option value="boolean">boolean</option>
+            </select>
+          </td>
+          <td><input [(ngModel)]="item.pk" type="checkbox"></td>
+          <td><input [(ngModel)]="item.unique" type="checkbox"></td>
+          <td><input [(ngModel)]="item.nullable" type="checkbox"></td>
+          <td><input [(ngModel)]="item.autoIncrement" type="checkbox"></td>
+          <td><input class="form-control" [(ngModel)]="item.defaultValue" type="text"></td>
+          <td>
+            <button class="btn btn-danger" (click)="removeAttribute(i)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </td>
+        </tr>
+        </tbody>
+      </table>
+      <div class="d-flex flex-column align-items-stretch">
+        <div class="d-flex justify-content-start">
+          <button class="btn btn-primary" (click)="addAttribute()">
+            <i class="bi bi-plus"></i>
+            New Attribute
           </button>
-        </td>
-      </tr>
-      </tbody>
-    </table>
-    <button class="btn btn-primary" (click)="addAttribute()">Add Attribute</button>
-    <button class="btn btn-success" (click)="updateEntity()">Update Entity</button>
+        </div>
+        <div class="mt-3 d-flex justify-content-end">
+          <button class="btn btn-success" (click)="updateEntity()">
+            <i class="bi bi-check-lg"></i>
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
+    </div>
   </div>
 </div>
