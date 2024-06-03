@@ -250,7 +250,6 @@ export class DiagramComponent implements OnInit {
   // Entity editor
   showTableEditorModal(entity: any): void {
     this.selectedEntity = entity;
-    console.log('aqui');
     this.openEntityEditorModal();
   }
 
@@ -309,6 +308,12 @@ export class DiagramComponent implements OnInit {
   }
 
   entityClicked(entity: any): void {
+    const hasPrimaryKey: boolean = entity.items.some((item: AttributeModel) : boolean => item.pk);
+    if (!hasPrimaryKey) {
+      console.log(`Entity ${entity.key} does not have a primary key and cannot be part of a relationship.`);
+      return;
+    }
+
     if (this.selectedRelationshipType && this.selectedEntities.length < 2) {
       this.selectedEntities.push(entity);
     }
