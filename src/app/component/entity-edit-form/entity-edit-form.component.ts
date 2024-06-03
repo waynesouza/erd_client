@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { EntityModel } from '../../model/entity.model';
 import { Point } from 'gojs';
+import { DataType } from "../../model/enum/datatype.enum";
 
 @Component({
   selector: 'app-entity-edit-form',
@@ -18,9 +19,10 @@ export class EntityEditFormComponent {
   @Output() entityUpdated: EventEmitter<EntityModel> = new EventEmitter<EntityModel>();
   @Output() entityRemoved: EventEmitter<string> = new EventEmitter<string>();
   @Output() close: EventEmitter<void> = new EventEmitter<void>();
+  dataTypes: DataType[] = Object.values(DataType);
 
   addAttribute(): void {
-    this.entity.items.push({ name: '', type: '', pk: false, fk: false, unique: false, defaultValue: '', nullable: false, autoIncrement: false });
+    this.entity.items.push({ name: '', type: null, pk: false, fk: false, unique: false, defaultValue: '', nullable: false, autoIncrement: false });
   }
 
   removeAttribute(index: number): void {

@@ -32,13 +32,7 @@
           <td><input class="form-control" [(ngModel)]="item.name" type="text"></td>
           <td>
             <select class="form-control" [(ngModel)]="item.type">
-              <option value="int">int</option>
-              <option value="varchar">varchar</option>
-              <option value="text">text</option>
-              <option value="date">date</option>
-              <option value="datetime">datetime</option>
-              <option value="float">float</option>
-              <option value="boolean">boolean</option>
+              <option *ngFor="let type of dataTypes" [value]="type">{{type}}</option>
             </select>
           </td>
           <td><input [(ngModel)]="item.pk" type="checkbox"></td>
