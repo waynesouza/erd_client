@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { ProjectService } from '../../service/project.service';
 import { StorageService } from '../../service/storage.service';
 import { SharedService } from '../../service/shared.service';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-side-bar',
@@ -12,14 +13,19 @@ import { SharedService } from '../../service/shared.service';
 })
 export class SideBarComponent implements OnInit {
 
-  @Output() itemClicked = new EventEmitter<string>();
+  @Output() itemClicked: EventEmitter<string> = new EventEmitter<string>();
   projects: any[] | null = [];
   email: string = '';
-  isExpanded = false;
-  isModalOpen = false;
+  isExpanded: boolean = false;
+  isModalOpen: boolean = false;
+  private subscription: Subscription;
 
   constructor(public authService: AuthService, public projectService: ProjectService,
-              private storageService: StorageService, private router: Router, private sharedService: SharedService) { }
+              private storageService: StorageService, private router: Router, private sharedService: SharedService) {
+    this.subscription = this.authService.isLoggedIn.subscribe(() : void => {
+      this.buildProjectList();
+    });
+  }
 
   ngOnInit(): void {
     this.buildProjectList();
@@ -57,6 +63,10 @@ export class SideBarComponent implements OnInit {
 
   closeModal() {
     this.isModalOpen = false;
+  }
+
+  ngOnDestroy(): void {
+    this.subscription.unsubscribe();
   }
 
 }
