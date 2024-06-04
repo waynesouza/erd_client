@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, Subject, tap } from 'rxjs';
 import { RegisterModel } from '../model/register.model';
 import { LoginModel } from '../model/login.model';
 
@@ -12,11 +12,16 @@ const httpOptions = { headers: new HttpHeaders({'Content-Type': 'application/jso
 })
 export class AuthService {
 
+  private loggedIn = new Subject<void>()
+
   constructor(private http: HttpClient) { }
 
-  login(login: LoginModel): Observable<any> {
-    return this.http.post<any>(`${BASE_URL}/auth/login`, login, httpOptions);
+  get isLoggedIn() {
+    return this.loggedIn.asObservable();
+  }
 
+  login(login: LoginModel): Observable<any> {
+    return this.http.post<any>(`${BASE_URL}/auth/login`, login, httpOptions).pipe(tap(() => this.loggedIn.next()));
   }
 
   register(register: RegisterModel): Observable<any> {

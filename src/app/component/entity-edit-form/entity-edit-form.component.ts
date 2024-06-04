@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { EntityModel } from "../../model/entity.model";
+import { EntityModel } from '../../model/entity.model';
 import { Point } from 'gojs';
+import { DataType } from "../../model/enum/datatype.enum";
 
 @Component({
   selector: 'app-entity-edit-form',
@@ -15,12 +16,13 @@ export class EntityEditFormComponent {
     items: [],
     location: new Point(0, 0)
   };
-  @Output() entityUpdated = new EventEmitter<EntityModel>();
-  @Output() entityRemoved = new EventEmitter<string>();
-  @Output() formClosed = new EventEmitter<void>();
+  @Output() entityUpdated: EventEmitter<EntityModel> = new EventEmitter<EntityModel>();
+  @Output() entityRemoved: EventEmitter<string> = new EventEmitter<string>();
+  @Output() close: EventEmitter<void> = new EventEmitter<void>();
+  dataTypes: DataType[] = Object.values(DataType);
 
-  addAttribute() {
-    this.entity.items.push({ name: '', type: '', pk: false, fk: false, unique: false, defaultValue: '', nullable: false, autoIncrement: false });
+  addAttribute(): void {
+    this.entity.items.push({ name: '', type: null, pk: false, fk: false, unique: false, defaultValue: '', nullable: false, autoIncrement: false });
   }
 
   removeAttribute(index: number): void {
@@ -29,16 +31,12 @@ export class EntityEditFormComponent {
   }
 
   updateEntity(): void {
-    console.log(this.entity);
     this.entityUpdated.emit(this.entity);
+    this.closeModal();
   }
 
-  removeEntity(): void {
-    this.entityRemoved.emit(this.entity.id);
-  }
-
-  closeForm(): void {
-    this.formClosed.emit();
+  closeModal(): void {
+    this.close.emit();
   }
 
 }

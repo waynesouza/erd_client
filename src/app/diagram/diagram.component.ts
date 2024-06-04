@@ -32,6 +32,7 @@ export class DiagramComponent implements OnInit {
   selectedRelationshipType: '1:1' | '1:N' | 'N:N' | null = null;
   selectedEntities: any[] = [];
   projectId: string = '';
+  isEntityEditorModalOpen: boolean = false;
   // @ts-ignore
   public diagram: go.Diagram = null;
 
@@ -249,7 +250,7 @@ export class DiagramComponent implements OnInit {
   // Entity editor
   showTableEditorModal(entity: any): void {
     this.selectedEntity = entity;
-    this.showTableEditor = true;
+    this.openEntityEditorModal();
   }
 
   handleSave(entity: any): void {
@@ -307,6 +308,12 @@ export class DiagramComponent implements OnInit {
   }
 
   entityClicked(entity: any): void {
+    const hasPrimaryKey: boolean = entity.items.some((item: AttributeModel) : boolean => item.pk);
+    if (!hasPrimaryKey) {
+      console.log(`Entity ${entity.key} does not have a primary key and cannot be part of a relationship.`);
+      return;
+    }
+
     if (this.selectedRelationshipType && this.selectedEntities.length < 2) {
       this.selectedEntities.push(entity);
     }
@@ -443,6 +450,16 @@ export class DiagramComponent implements OnInit {
     this.entities = data.nodeDataArray;
     this.relationships = data.linkDataArray;
     this.remakeDiagram();
+  }
+
+  // Entity editor modal
+  openEntityEditorModal(): void {
+    this.isEntityEditorModalOpen = true;
+    console.log(this.isEntityEditorModalOpen);
+  }
+
+  closeEntityEditorModal(): void {
+    this.isEntityEditorModalOpen = false;
   }
 
   sendToServer(): void {
