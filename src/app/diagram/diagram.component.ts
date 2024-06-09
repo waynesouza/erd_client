@@ -78,8 +78,13 @@ export class DiagramComponent implements OnInit {
 
     const itemTemplate = $(go.Panel, 'Horizontal',
       $(go.Shape,
-        {desiredSize: new go.Size(15, 15), strokeJoin: 'round', strokeWidth: 3, stroke: '#eeeeee', margin: 2},
-        new go.Binding('figure', 'figure')
+        {
+          desiredSize: new go.Size(15, 15),
+          margin: 2,
+          fill: 'blue'
+        },
+        new go.Binding('figure', 'pk', (pk) => pk ? 'Square' : 'Circle'), // Change shape based on 'pk'
+        new go.Binding('fill', 'pk', (pk) => pk ? 'yellow' : 'blue') // Change color based on 'pk'
       ),
       $(go.TextBlock,
         {font: '14px sans-serif', stroke: 'black'},

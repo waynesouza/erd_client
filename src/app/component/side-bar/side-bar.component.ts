@@ -18,6 +18,7 @@ export class SideBarComponent implements OnInit {
   email: string = '';
   isExpanded: boolean = false;
   isModalOpen: boolean = false;
+  isHovered: boolean = false;
   private subscription: Subscription;
 
   constructor(public authService: AuthService, public projectService: ProjectService,
