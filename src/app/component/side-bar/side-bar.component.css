@@ -18,3 +18,31 @@
   right: -25px;
   transform: translateY(-50%);
 }
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+ul, .text-center {
+  padding-left: 10px;
+}
+
+ul li {
+  cursor: pointer;
+  padding: 10px 0;
+}
+
+ul li:hover {
+  background-color: #ddd;
+}
+
+ul li i {
+  visibility: hidden;
+  float: right;
+  margin-right: 10px;
+}
+
+ul li:hover i {
+  visibility: visible;
+}

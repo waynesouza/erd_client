@@ -2,7 +2,11 @@
   <div class="project-title bg-primary text-white text-center">Projects</div>
   <div>
     <ul>
-      <li *ngFor="let project of projects" (click)="loadProject(project.id)">{{ project.name }}</li>
+      <li *ngFor="let project of projects" (click)="loadProject(project.id)"
+          (mouseenter)="isHovered = true" (mouseleave)="isHovered = false">
+        {{ project.name }}
+        <i class="bi bi-gear-fill" *ngIf="isHovered"></i>
+      </li>
     </ul>
   </div>
   <div class="text-center">
