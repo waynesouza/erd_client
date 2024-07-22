@@ -14,6 +14,7 @@ import { SideBarComponent } from './component/side-bar/side-bar.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CreateProjectModalComponent } from './component/modal/create-project-modal/create-project-modal.component';
 import { EntityEditFormComponent } from './component/entity-edit-form/entity-edit-form.component';
+import { EditProjectModalComponent } from './component/modal/edit-project-modal/edit-project-modal.component';
 
 @NgModule({
   declarations: [
@@ -25,6 +26,7 @@ import { EntityEditFormComponent } from './component/entity-edit-form/entity-edi
     SideBarComponent,
     CreateProjectModalComponent,
     EntityEditFormComponent,
+    EditProjectModalComponent,
   ],
   imports: [
     BrowserModule,
