@@ -12,9 +12,9 @@ import { LoginComponent } from './component/login/login.component';
 import { RegisterComponent } from './component/register/register.component';
 import { SideBarComponent } from './component/side-bar/side-bar.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { CreateProjectModalComponent } from './component/modal/create-project-modal/create-project-modal.component';
 import { EntityEditFormComponent } from './component/entity-edit-form/entity-edit-form.component';
 import { ProjectModalComponent } from './component/modal/project/project-modal.component';
+import { NgOptimizedImage } from "@angular/common";
 
 @NgModule({
   declarations: [
@@ -24,7 +24,6 @@ import { ProjectModalComponent } from './component/modal/project/project-modal.c
     LoginComponent,
     RegisterComponent,
     SideBarComponent,
-    CreateProjectModalComponent,
     EntityEditFormComponent,
     ProjectModalComponent
   ],
@@ -33,7 +32,8 @@ import { ProjectModalComponent } from './component/modal/project/project-modal.c
     BrowserAnimationsModule,
     AppRoutingModule,
     FormsModule,
-    HttpClientModule
+    HttpClientModule,
+    NgOptimizedImage
   ],
   providers: [{ provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true }],
   bootstrap: [AppComponent]

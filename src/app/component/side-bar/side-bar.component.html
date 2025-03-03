@@ -16,4 +16,19 @@
 
     <app-project-modal *ngIf="isModalOpen" [isEditMode]="isEditMode" [projectToEdit]="selectedProject" (modalClosed)="closeModal()"></app-project-modal>
   </div>
+  <div class="user-section">
+    <div class="user-info">
+      <!-- TODO User avatar -->
+      <div class="user-details">
+        <p class="user-name">{{ user?.fullName || 'Username' }}</p>
+        <p class="user-email">{{ user?.email || 'user@example.com' }}</p>
+      </div>
+    </div>
+    <div class="user-actions">
+      <!-- TODO Goto profile -->
+      <button class="btn btn-sm btn-outline-danger user-btn" (click)="logout()">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </button>
+    </div>
+  </div>
 </div>

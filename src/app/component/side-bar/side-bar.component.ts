@@ -5,6 +5,7 @@ import { ProjectService } from '../../service/project.service';
 import { StorageService } from '../../service/storage.service';
 import { SharedService } from '../../service/shared.service';
 import { Subscription } from 'rxjs';
+import { AuthResponseModel } from "../../model/auth-response.model";
 
 @Component({
   selector: 'app-side-bar',
@@ -16,23 +17,17 @@ export class SideBarComponent implements OnInit {
   @Output() itemClicked: EventEmitter<string> = new EventEmitter<string>();
   projects: any[] | null = [];
   email: string = '';
-  isExpanded: boolean = false;
   isModalOpen: boolean = false;
-  isHovered: boolean = false;
   hoveredProjectId: string | null = null;
 
   isEditMode: boolean = false;
   selectedProject: any = null;
 
   private subscription: Subscription;
+  protected user: AuthResponseModel;
 
-  constructor(
-    public authService: AuthService,
-    public projectService: ProjectService,
-    private storageService: StorageService,
-    private router: Router,
-    private sharedService: SharedService
-  ) {
+  constructor(public authService: AuthService, public projectService: ProjectService, private storageService: StorageService, private router: Router, private sharedService: SharedService) {
+    this.user = this.storageService.getUser();
     this.subscription = this.authService.isLoggedIn.subscribe((): void => {
       this.buildProjectList();
     });
@@ -40,10 +35,6 @@ export class SideBarComponent implements OnInit {
 
   ngOnInit(): void {
     this.buildProjectList();
-  }
-
-  toggleMenu(): void {
-    this.isExpanded = !this.isExpanded;
   }
 
   logout(): void {
@@ -57,8 +48,7 @@ export class SideBarComponent implements OnInit {
   }
 
   buildProjectList() {
-    const user = this.storageService.getUser();
-    this.projectService.getProjectsByUserEmail(user.email).subscribe(response => {
+    this.projectService.getProjectsByUserEmail(this.user.email).subscribe(response => {
       // @ts-ignore
       this.projects = response;
     });
