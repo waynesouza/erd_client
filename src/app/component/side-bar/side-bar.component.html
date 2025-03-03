@@ -2,18 +2,18 @@
   <div class="project-title bg-primary text-white text-center">Projects</div>
   <div>
     <ul>
-      <li *ngFor="let project of projects" (click)="loadProject(project.id)"
-          (mouseenter)="isHovered = true" (mouseleave)="isHovered = false">
+      <li *ngFor="let project of projects" (click)="loadProject(project.id)" (mouseenter)="setHoveredProject(project.id)" (mouseleave)="setHoveredProject(null)">
         {{ project.name }}
-        <i class="bi bi-gear-fill" *ngIf="isHovered"></i>
+        <i class="bi bi-gear-fill" *ngIf="hoveredProjectId === project.id" (click)="openEditModal(project, $event)"></i>
       </li>
     </ul>
   </div>
   <div class="text-center">
-    <button class="btn btn-primary" (click)="openModal()">
+    <button class="btn btn-primary" (click)="openCreateModal()">
       Create Project
       <i class="bi bi-plus-circle"></i>
     </button>
-    <app-create-project-modal *ngIf="isModalOpen" (close)="closeModal()"></app-create-project-modal>
+
+    <app-project-modal *ngIf="isModalOpen" [isEditMode]="isEditMode" [projectToEdit]="selectedProject" (modalClosed)="closeModal()"></app-project-modal>
   </div>
 </div>

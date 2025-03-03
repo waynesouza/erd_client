@@ -22,4 +22,8 @@ export class ProjectService {
     return this.http.get<any>(`${BASE_URL}/user-email/${email}`, httpOptions);
   }
 
+  updateProject(project: any): Observable<HttpResponse<any>> {
+    return this.http.put<any>(BASE_URL, project, httpOptions);
+  }
+
 }

@@ -19,11 +19,21 @@ export class SideBarComponent implements OnInit {
   isExpanded: boolean = false;
   isModalOpen: boolean = false;
   isHovered: boolean = false;
+  hoveredProjectId: string | null = null;
+
+  isEditMode: boolean = false;
+  selectedProject: any = null;
+
   private subscription: Subscription;
 
-  constructor(public authService: AuthService, public projectService: ProjectService,
-              private storageService: StorageService, private router: Router, private sharedService: SharedService) {
-    this.subscription = this.authService.isLoggedIn.subscribe(() : void => {
+  constructor(
+    public authService: AuthService,
+    public projectService: ProjectService,
+    private storageService: StorageService,
+    private router: Router,
+    private sharedService: SharedService
+  ) {
+    this.subscription = this.authService.isLoggedIn.subscribe((): void => {
       this.buildProjectList();
     });
   }
@@ -36,13 +46,13 @@ export class SideBarComponent implements OnInit {
     this.isExpanded = !this.isExpanded;
   }
 
-  logout() {
+  logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']).then();
   }
 
   isLoginOrRegisterRoute() {
-    const url = this.router.url;
+    const url: string = this.router.url;
     return url.includes('/login') || url.includes('/register');
   }
 
@@ -58,12 +68,26 @@ export class SideBarComponent implements OnInit {
     this.sharedService.changeProjectId(projectId);
   }
 
-  openModal() {
+  openCreateModal() {
+    this.isEditMode = false;
+    this.selectedProject = null;
+    this.isModalOpen = true;
+  }
+
+  openEditModal(project: any, event: MouseEvent) {
+    event.stopPropagation();
+    this.isEditMode = true;
+    this.selectedProject = { ...project };
     this.isModalOpen = true;
   }
 
   closeModal() {
     this.isModalOpen = false;
+    this.buildProjectList();
+  }
+
+  setHoveredProject(projectId: string | null) {
+    this.hoveredProjectId = projectId;
   }
 
   ngOnDestroy(): void {

@@ -14,7 +14,7 @@ import { SideBarComponent } from './component/side-bar/side-bar.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { CreateProjectModalComponent } from './component/modal/create-project-modal/create-project-modal.component';
 import { EntityEditFormComponent } from './component/entity-edit-form/entity-edit-form.component';
-import { EditProjectModalComponent } from './component/modal/edit-project-modal/edit-project-modal.component';
+import { ProjectModalComponent } from './component/modal/edit-project-modal/project-modal.component';
 
 @NgModule({
   declarations: [
@@ -26,7 +26,7 @@ import { EditProjectModalComponent } from './component/modal/edit-project-modal/
     SideBarComponent,
     CreateProjectModalComponent,
     EntityEditFormComponent,
-    EditProjectModalComponent,
+    ProjectModalComponent
   ],
   imports: [
     BrowserModule,
@@ -35,7 +35,7 @@ import { EditProjectModalComponent } from './component/modal/edit-project-modal/
     FormsModule,
     HttpClientModule
   ],
-  providers: [{provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true}],
+  providers: [{ provide: HTTP_INTERCEPTORS, useClass: JwtInterceptor, multi: true }],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
