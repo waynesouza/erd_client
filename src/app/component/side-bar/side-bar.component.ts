@@ -5,6 +5,7 @@ import { ProjectService } from '../../service/project.service';
 import { StorageService } from '../../service/storage.service';
 import { SharedService } from '../../service/shared.service';
 import { Subscription } from 'rxjs';
+import { AuthResponseModel } from "../../model/auth-response.model";
 
 @Component({
   selector: 'app-side-bar',
@@ -16,14 +17,18 @@ export class SideBarComponent implements OnInit {
   @Output() itemClicked: EventEmitter<string> = new EventEmitter<string>();
   projects: any[] | null = [];
   email: string = '';
-  isExpanded: boolean = false;
   isModalOpen: boolean = false;
-  isHovered: boolean = false;
-  private subscription: Subscription;
+  hoveredProjectId: string | null = null;
 
-  constructor(public authService: AuthService, public projectService: ProjectService,
-              private storageService: StorageService, private router: Router, private sharedService: SharedService) {
-    this.subscription = this.authService.isLoggedIn.subscribe(() : void => {
+  isEditMode: boolean = false;
+  selectedProject: any = null;
+
+  private subscription: Subscription;
+  protected user: AuthResponseModel;
+
+  constructor(public authService: AuthService, public projectService: ProjectService, private storageService: StorageService, private router: Router, private sharedService: SharedService) {
+    this.user = this.storageService.getUser();
+    this.subscription = this.authService.isLoggedIn.subscribe((): void => {
       this.buildProjectList();
     });
   }
@@ -32,23 +37,18 @@ export class SideBarComponent implements OnInit {
     this.buildProjectList();
   }
 
-  toggleMenu(): void {
-    this.isExpanded = !this.isExpanded;
-  }
-
-  logout() {
+  logout(): void {
     this.authService.logout();
     this.router.navigate(['/login']).then();
   }
 
   isLoginOrRegisterRoute() {
-    const url = this.router.url;
+    const url: string = this.router.url;
     return url.includes('/login') || url.includes('/register');
   }
 
   buildProjectList() {
-    const user = this.storageService.getUser();
-    this.projectService.getProjectsByUserEmail(user.email).subscribe(response => {
+    this.projectService.getProjectsByUserEmail(this.user.email).subscribe(response => {
       // @ts-ignore
       this.projects = response;
     });
@@ -58,12 +58,26 @@ export class SideBarComponent implements OnInit {
     this.sharedService.changeProjectId(projectId);
   }
 
-  openModal() {
+  openCreateModal() {
+    this.isEditMode = false;
+    this.selectedProject = null;
+    this.isModalOpen = true;
+  }
+
+  openEditModal(project: any, event: MouseEvent) {
+    event.stopPropagation();
+    this.isEditMode = true;
+    this.selectedProject = { ...project };
     this.isModalOpen = true;
   }
 
   closeModal() {
     this.isModalOpen = false;
+    this.buildProjectList();
+  }
+
+  setHoveredProject(projectId: string | null) {
+    this.hoveredProjectId = projectId;
   }
 
   ngOnDestroy(): void {
