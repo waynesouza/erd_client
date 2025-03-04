@@ -64,10 +64,11 @@ export class SideBarComponent implements OnInit {
     this.isModalOpen = true;
   }
 
-  openEditModal(project: any, event: MouseEvent) {
+  openEditModal(project: any, event: MouseEvent) : void {
     event.stopPropagation();
+
     this.isEditMode = true;
-    this.selectedProject = { ...project };
+    this.selectedProject = this.getProjectDataById(project.id);
     this.isModalOpen = true;
   }
 
@@ -78,6 +79,16 @@ export class SideBarComponent implements OnInit {
 
   setHoveredProject(projectId: string | null) {
     this.hoveredProjectId = projectId;
+  }
+
+  getProjectDataById(id: string): any {
+    let projectData : {} = {};
+
+    this.projectService.getProjectById(id).subscribe(response => {
+      projectData = response.body;
+    });
+
+    return projectData;
   }
 
   ngOnDestroy(): void {

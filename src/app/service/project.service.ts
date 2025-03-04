@@ -26,4 +26,8 @@ export class ProjectService {
     return this.http.put<any>(BASE_URL, project, httpOptions);
   }
 
+  getProjectById(id: string): Observable<HttpResponse<any>> {
+    return this.http.get<any>(`${BASE_URL}/${id}`, httpOptions);
+  }
+
 }

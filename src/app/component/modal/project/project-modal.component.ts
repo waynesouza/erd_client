@@ -2,6 +2,7 @@ import { Component, Input, OnInit, Output, EventEmitter } from '@angular/core';
 import { StorageService } from '../../../service/storage.service';
 import { ProjectService } from '../../../service/project.service';
 import { DiagramService } from '../../../service/diagram.service';
+import { AuthService } from "../../../service/auth.service";
 
 @Component({
   selector: 'app-project-modal',
@@ -15,6 +16,8 @@ export class ProjectModalComponent implements OnInit {
 
   modalTitle: string = 'Create Project';
   buttonText: string = 'Create';
+
+  currentUser: any = {};
 
   newProject: any = {
     name: '',
@@ -32,6 +35,8 @@ export class ProjectModalComponent implements OnInit {
   constructor(private diagramService: DiagramService, private projectService: ProjectService, private storageService: StorageService) { }
 
   ngOnInit(): void {
+    this.currentUser = this.storageService.getUser();
+
     if (this.isEditMode && this.projectToEdit) {
       this.modalTitle = 'Edit Project';
       this.buttonText = 'Update';
@@ -50,7 +55,8 @@ export class ProjectModalComponent implements OnInit {
       id: '',
       name: '',
       description: '',
-      createdAt: ''
+      createdAt: '',
+      usersDto: []
     };
 
     this.modalClosed.emit(true);
@@ -76,6 +82,43 @@ export class ProjectModalComponent implements OnInit {
 
   get currentProject(): any {
     return this.isEditMode ? this.editProject : this.newProject;
+  }
+
+  canManageMembers(): boolean {
+    if (!this.currentUser || !this.projectToEdit) return false;
+
+    // @ts-ignore
+    const currentMember = this.projectToEdit.usersDto.find(member => member.id === this.currentUser.id);
+
+    if (!currentMember) return false;
+
+    return ['OWNER', 'EDITOR'].includes(currentMember.role);
+  }
+
+  canRemoveMember(member: any): boolean {
+    if (!this.canManageMembers()) return false;
+
+    // @ts-ignore
+    const currentMember = this.projectToEdit.usersDto.find(member => member.id === this.currentUser.id);
+
+    if (currentMember.role === 'EDITOR' && member.role === 'OWNER') {
+      return false;
+    }
+
+    return member.id !== this.currentUser.id;
+  }
+
+  removeMember(memberId: string) : void {
+    if (!this.canManageMembers()) return;
+
+    // TODO Remove member
+    // if (confirm('Are you sure you want to remove this member from the project?')) {
+    //   this.projectService.removeMember(this.projectToEdit.id, memberId).subscribe(() : void => {
+    //       // @ts-ignore
+    //       this.projectToEdit.members = this.projectToEdit.usersDto.filter(member => member.id !== memberId);
+    //     }
+    //   );
+    // }
   }
 
 }

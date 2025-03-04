@@ -13,3 +13,58 @@
 .modal-dialog {
   margin: 15% auto;
 }
+
+/* Members */
+.members-section {
+  border-top: 1px solid #dee2e6;
+  padding-top: 20px;
+}
+
+.members-title {
+  margin-bottom: 15px;
+  color: #495057;
+}
+
+.member-info {
+  display: flex;
+  align-items: center;
+}
+
+.member-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  margin-right: 10px;
+}
+
+.member-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.member-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.member-name {
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.member-email {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.member-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.badge {
+  padding: 5px 8px;
+  font-weight: 500;
+}

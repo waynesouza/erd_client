@@ -13,8 +13,60 @@
           </div>
           <div class="form-group">
             <label for="description" class="form-label">Description</label>
-            <input type="text" class="form-control" id="description" name="description" [(ngModel)]="currentProject.description" required>
+            <input type="text" class="form-control" id="description" name="description"
+                   [(ngModel)]="currentProject.description" required>
           </div>
+
+          <div class="members-section mt-4" *ngIf="isEditMode">
+            <h6 class="members-title">Project Members</h6>
+
+            <div class="table-responsive">
+              <table class="table table-hover">
+                <thead>
+                <tr>
+                  <th>User</th>
+                  <th>Role</th>
+                  <th *ngIf="canManageMembers()">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr *ngFor="let member of projectToEdit.usersDto">
+                  <td>
+                    <div class="member-info">
+                      <div class="member-details">
+                        <div class="member-email">{{ member.email }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                <span class="badge"
+                      [ngClass]="{
+                        'bg-danger': member.role === 'OWNER',
+                        'bg-primary': member.role === 'EDITOR',
+                        'bg-secondary': member.role === 'VIEWER'
+                      }">
+                  {{ member.role }}
+                </span>
+                  </td>
+                  <td *ngIf="canManageMembers()">
+                    <div class="member-actions" *ngIf="canRemoveMember(member)">
+                      <button class="btn btn-outline-danger btn-sm" (click)="removeMember(member.id)">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="add-member mt-3" *ngIf="canManageMembers()">
+              <button class="btn btn-outline-primary btn-sm">
+                <i class="bi bi-person-plus"></i> Add Member
+              </button>
+            </div>
+          </div>
+
           <button type="submit" class="btn btn-primary">{{ buttonText }}</button>
         </form>
       </div>
