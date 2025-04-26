@@ -1,34 +1,63 @@
-<div class="bg-light" *ngIf="!isLoginOrRegisterRoute()">
-  <div class="project-title bg-primary text-white text-center">Projects</div>
-  <div>
-    <ul>
-      <li *ngFor="let project of projects" (click)="loadProject(project.id)" (mouseenter)="setHoveredProject(project.id)" (mouseleave)="setHoveredProject(null)">
-        {{ project.name }}
-        <i class="bi bi-gear-fill" *ngIf="hoveredProjectId === project.id" (click)="openEditModal(project, $event)"></i>
-      </li>
-    </ul>
-  </div>
-  <div class="text-center">
-    <button class="btn btn-primary" (click)="openCreateModal()">
-      Create Project
-      <i class="bi bi-plus-circle"></i>
-    </button>
+<div class="sidebar" [class.collapsed]="isCollapsed">
+  <button class="toggle-btn" (click)="toggleSidebar()">
+    <i class="bi bi-chevron-left"></i>
+  </button>
 
-    <app-project-modal *ngIf="isModalOpen" [isEditMode]="isEditMode" [projectToEdit]="selectedProject" (modalClosed)="closeModal()"></app-project-modal>
+  <div class="logo-space">
+    <!-- Logo will be added here -->
   </div>
+
+  <div class="sidebar-content">
+    <div class="projects-section">
+      <div class="section-header">
+        <i class="bi bi-diagram-2"></i>
+        <span>Projects</span>
+      </div>
+
+      <div class="projects-list">
+        <div class="project-item" *ngFor="let project of projects"
+             (click)="loadProject(project.id)"
+             (mouseenter)="setHoveredProject(project.id)"
+             (mouseleave)="setHoveredProject(null)">
+          <div class="project-name">
+            <i class="bi bi-folder2"></i>
+            <span>{{ project.name }}</span>
+          </div>
+          <button class="edit-btn" *ngIf="hoveredProjectId === project.id" (click)="openEditModal(project, $event)">
+            <i class="bi bi-pencil-square"></i>
+          </button>
+        </div>
+      </div>
+
+      <button class="create-project-btn" *ngIf="!isCollapsed" (click)="openCreateModal()">
+        <i class="bi bi-plus-lg"></i>
+        <span>New Project</span>
+      </button>
+    </div>
+  </div>
+
   <div class="user-section">
     <div class="user-info">
-      <!-- TODO User avatar -->
+      <div class="user-avatar">
+        <i class="bi bi-person-circle"></i>
+      </div>
       <div class="user-details">
         <p class="user-name">{{ user?.fullName || 'Username' }}</p>
         <p class="user-email">{{ user?.email || 'user@example.com' }}</p>
       </div>
     </div>
     <div class="user-actions">
-      <!-- TODO Goto profile -->
-      <button class="btn btn-sm btn-outline-danger user-btn" (click)="logout()">
-        <i class="bi bi-box-arrow-right"></i> Logout
+      <button (click)="logout()">
+        <i class="bi bi-box-arrow-right"></i>
+        <span>Logout</span>
       </button>
     </div>
   </div>
 </div>
+
+<app-project-modal
+  *ngIf="isModalOpen"
+  [isEditMode]="isEditMode"
+  [projectToEdit]="selectedProject"
+  (modalClosed)="closeModal()">
+</app-project-modal>

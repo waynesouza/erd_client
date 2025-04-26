@@ -72,142 +72,173 @@ export class DiagramComponent implements OnInit {
   }
 
   private initializeDiagram(): void {
-    this.diagram = $(go.Diagram, 'myDiagramDiv', {});
+    this.diagram = $(go.Diagram, 'myDiagramDiv', {
+      initialContentAlignment: go.Spot.Center,
+      "animationManager.isEnabled": false,
+      "undoManager.isEnabled": true,
+      allowDelete: true,
+      allowCopy: false,
+      "toolManager.mouseWheelBehavior": go.ToolManager.WheelZoom,
+      "clickCreatingTool.archetypeNodeData": { text: "new node" },
+      model: new go.GraphLinksModel([])
+    });
 
     this.diagram.model = new go.GraphLinksModel({nodeDataArray: this.entities});
 
-    const itemTemplate = $(go.Panel, 'Horizontal',
+    const itemTemplate = $(go.Panel, "Horizontal",
       $(go.Shape,
         {
-          desiredSize: new go.Size(15, 15),
-          margin: 2,
-          fill: 'blue'
+          width: 16,
+          height: 16,
+          margin: new go.Margin(0, 8, 0, 0),
         },
-        new go.Binding('figure', 'pk', (pk) => pk ? 'Square' : 'Circle'), // Change shape based on 'pk'
-        new go.Binding('fill', 'pk', (pk) => pk ? 'yellow' : 'blue') // Change color based on 'pk'
+        new go.Binding("figure", "pk", pk => pk ? "Diamond" : "Circle"),
+        new go.Binding("fill", "pk", pk => pk ? "#8b5cf6" : "#6366f1"),
+        new go.Binding("stroke", "pk", pk => pk ? "#7c3aed" : "#4f46e5")
       ),
       $(go.TextBlock,
-        {font: '14px sans-serif', stroke: 'black'},
-        new go.Binding('text', 'name'), new go.Binding('stroke', '', n => (this.diagram.model.modelData['darkMode']) ? '#f5f5f5' : '#000000')),
+        {
+          font: "14px Inter, system-ui, sans-serif",
+          margin: new go.Margin(0, 8, 0, 0),
+        },
+        new go.Binding("text", "name"),
+        new go.Binding("stroke", "", () => this.darkMode ? "#f3f4f6" : "#1f2937")
+      ),
+      $(go.TextBlock,
+        {
+          font: "14px Inter, system-ui, sans-serif",
+          stroke: "#6b7280"
+        },
+        new go.Binding("text", "type")
+      )
     );
 
-    this.diagram.nodeTemplate = $(go.Node, 'Auto', {
-        selectionAdorned: true,
-        resizable: true,
-        fromSpot: go.Spot.LeftRightSides,
-        toSpot: go.Spot.LeftRightSides,
-        isShadowed: true,
-        shadowOffset: new go.Point(4, 4),
-        shadowColor: '#919cab',
-        click: (e, node) => {
-          // @ts-ignore
-          this.entityClicked(node.part.data);
-        }
-      },
-      new go.Binding('location', 'location').makeTwoWay(),
-      new go.Binding('desiredSize', 'visible', v => new go.Size(NaN, NaN)).ofObject('LIST'),
-      $(go.Shape, 'RoundedRectangle',
-        {stroke: '#e8f1ff', strokeWidth: 3},
-        new go.Binding('fill', '', n => (this.diagram.model.modelData['darkMode']) ? '#4a4a4a' : '#f7f9fc')
-      ),
-      $(go.Panel, 'Table',
+    this.diagram.nodeTemplate =
+      $(go.Node, "Auto",
         {
-          margin: 8,
-          stretch: go.GraphObject.Fill,
-          width: 160
+          selectionAdorned: true,
+          resizable: true,
+          layoutConditions: go.Part.LayoutStandard & ~go.Part.LayoutNodeSized,
+          fromSpot: go.Spot.AllSides,
+          toSpot: go.Spot.AllSides,
+          isShadowed: true,
+          shadowOffset: new go.Point(2, 2),
+          shadowColor: "rgba(0,0,0,0.2)",
+          click: (e: go.InputEvent, node: go.GraphObject): void => {
+            // @ts-ignore
+            this.entityClicked(node.part.data);
+          }
         },
-        $(go.RowColumnDefinition, {row: 0, sizing: go.RowColumnDefinition.None}),
-        $(go.TextBlock,
+        new go.Binding("location", "location").makeTwoWay(),
+        $(go.Shape, "RoundedRectangle",
           {
-            row: 0, alignment: go.Spot.Center,
-            editable: true,
-            margin: new go.Margin(0, 24, 0, 2),
-            font: 'bold 16px sans-serif'
+            fill: "white",
+            stroke: "#e5e7eb",
+            strokeWidth: 1,
           },
-          new go.Binding('text', 'key').makeTwoWay(),
-          new go.Binding('stroke', '', n => (this.diagram.model.modelData['darkMode']) ? '#d6d6d6' : '#000000')),
-        $('PanelExpanderButton', 'LIST',
-          {row: 0, alignment: go.Spot.TopRight},
-          new go.Binding('ButtonIcon.stroke', '', n => (this.diagram.model.modelData['darkMode']) ? '#d6d6d6' : '#000000')),
-        $(go.Panel, 'Table',
-          {name: 'LIST', row: 1, stretch: go.GraphObject.Horizontal},
+          new go.Binding("fill", "", () => this.darkMode ? "#374151" : "white"),
+          new go.Binding("stroke", "", () => this.darkMode ? "#4b5563" : "#e5e7eb")
+        ),
+        $(go.Panel, "Table",
+          { defaultAlignment: go.Spot.Left, margin: 12 },
+          $(go.RowColumnDefinition, { row: 0, sizing: go.RowColumnDefinition.None }),
+
+          // Header
+          $(go.Panel, "Horizontal",
+            {
+              row: 0,
+              alignment: go.Spot.Center,
+              stretch: go.GraphObject.Horizontal,
+              background: "#f3f4f6"
+            },
+            new go.Binding("background", "", () => this.darkMode ? "#1f2937" : "#f3f4f6"),
+            $(go.TextBlock,
+              {
+                font: "600 16px Inter, system-ui, sans-serif",
+                margin: new go.Margin(8, 8, 8, 8),
+              },
+              new go.Binding("text", "key"),
+              new go.Binding("stroke", "", () => this.darkMode ? "#f3f4f6" : "#1f2937")
+            )
+          ),
+
+          // Attributes list
+          $(go.Panel, "Vertical",
+            {
+              name: "ATTRIBUTES",
+              row: 1,
+              margin: new go.Margin(8, 0, 0, 0),
+              stretch: go.GraphObject.Horizontal,
+              itemTemplate: itemTemplate,
+              defaultAlignment: go.Spot.Left
+            },
+            new go.Binding("itemArray", "items")
+          )
+        )
+      );
+
+    this.diagram.linkTemplate =
+      $(go.Link,
+        {
+          routing: go.Link.AvoidsNodes,
+          curve: go.Link.JumpOver,
+          corner: 10,
+          selectionAdorned: true,
+          fromEndSegmentLength: 50,
+          toEndSegmentLength: 50,
+        },
+        $(go.Shape,
+          {
+            stroke: "#6b7280",
+            strokeWidth: 2,
+          },
+          new go.Binding("stroke", "", () => this.darkMode ? "#4b5563" : "#6b7280")
+        ),
+        $(go.Shape,
+          { toArrow: "Standard", stroke: null },
+          new go.Binding("fill", "", () => this.darkMode ? "#4b5563" : "#6b7280")
+        ),
+        $(go.Panel, "Auto",
+          {
+            segmentOffset: new go.Point(0, -12)
+          },
+          $(go.Shape, "RoundedRectangle",
+            {
+              fill: this.darkMode ? "#374151" : "white",
+              stroke: this.darkMode ? "#4b5563" : "#e5e7eb"
+            }
+          ),
           $(go.TextBlock,
             {
-              font: 'bold 15px sans-serif',
-              text: 'Attributes',
-              row: 0,
-              alignment: go.Spot.TopLeft,
-              margin: new go.Margin(8, 0, 0, 0),
+              text: "1",
+              font: "600 12px Inter, system-ui, sans-serif",
+              margin: 3
             },
-            new go.Binding('stroke', '', n => (this.diagram.model.modelData['darkMode']) ? '#d6d6d6' : '#000000')),
-          $('PanelExpanderButton', 'NonInherited',
+            new go.Binding("text", "text"),
+            new go.Binding("stroke", "", () => this.darkMode ? "#f3f4f6" : "#1f2937")
+          )
+        ),
+        $(go.Panel, "Auto",
+          {
+            segmentOffset: new go.Point(0, -12),
+            segmentIndex: -1
+          },
+          $(go.Shape, "RoundedRectangle",
             {
-              row: 0,
-              column: 1
-            },
-            new go.Binding('ButtonIcon.stroke', '', n => (this.diagram.model.modelData['darkMode']) ? '#d6d6d6' : '#000000')),
-          $(go.Panel, 'Vertical',
+              fill: this.darkMode ? "#374151" : "white",
+              stroke: this.darkMode ? "#4b5563" : "#e5e7eb"
+            }
+          ),
+          $(go.TextBlock,
             {
-              name: 'NonInherited',
-              alignment: go.Spot.TopLeft,
-              defaultAlignment: go.Spot.Left,
-              itemTemplate: itemTemplate,
-              row: 1
+              font: "600 12px Inter, system-ui, sans-serif",
+              margin: 3
             },
-            new go.Binding('itemArray', 'items')),
+            new go.Binding("text", "toText"),
+            new go.Binding("stroke", "", () => this.darkMode ? "#f3f4f6" : "#1f2937")
+          )
         )
-      ),
-    );
-
-    this.diagram.linkTemplate = $(go.Link, {
-        selectionAdorned: true,
-        curve: go.Link.JumpOver,
-        corner: 5,
-        layerName: 'Background',
-        isShadowed: true,
-        shadowColor: '#919cab',
-        shadowOffset: new go.Point(2, 2),
-        routing: go.Link.AvoidsNodes
-      },
-      $(go.Shape,
-        {stroke: '#f7f9fc', strokeWidth: 4}),
-      $(go.Panel, 'Auto', {segmentIndex: 0, segmentOffset: new go.Point(22, 0)},
-        $(go.Shape, 'RoundedRectangle', {fill: '#f7f9fc'}, {stroke: '#eeeeee'}),
-        $(go.TextBlock,  // the 'from' label
-          {
-            textAlign: 'center',
-            font: 'bold 14px sans-serif',
-            stroke: 'black',
-            background: '#f7f9fc',
-            segmentOffset: new go.Point(NaN, NaN),
-            segmentOrientation: go.Link.OrientUpright
-          },
-          new go.Binding('text', 'text'))),
-      $(go.Panel, 'Auto',
-        {
-          segmentIndex: -1,
-          segmentOffset: new go.Point(-13, 0)
-        },
-        $(go.Shape, 'RoundedRectangle', {fill: '#edf6fc'}, {stroke: '#eeeeee'}),
-        $(go.TextBlock,  // the 'to' label
-          {
-            textAlign: 'center',
-            font: 'bold 14px sans-serif',
-            stroke: 'black',
-            segmentIndex: -1,
-            segmentOffset: new go.Point(NaN, NaN),
-            segmentOrientation: go.Link.OrientUpright
-          },
-          new go.Binding('text', 'toText')),
-        $(go.Panel, 'Auto',
-          {
-            segmentIndex: 0,
-            segmentOffset: new go.Point(0, 0),
-            segmentOrientation: go.Link.OrientUpright
-          },
-          $(go.Shape, 'Circle', {fill: '#f7f9fc', stroke: '#eeeeee', width: 16, height: 16})
-        )),
-    );
+      );
 
     this.diagram.nodeTemplate.doubleClick = (e: go.InputEvent, node: go.GraphObject): void => {
       // @ts-ignore

@@ -1,13 +1,99 @@
-#myDiagramDiv {
-  border: 1px solid black;
-  background-color: lightgrey;
+.diagram-container {
+  display: flex;
   height: 100vh;
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
 }
 
-.palette {
+.toolbar {
+  width: 60px;
+  background: #ffffff;
+  padding: 1rem 0.5rem;
+  display: flex;
   flex-direction: column;
+  gap: 1.5rem;
+  border-right: 1px solid #e5e7eb;
 }
 
-.col-fixed {
-  padding: 0 !important;
+.tool-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tool-group:last-child {
+  border-bottom: none;
+  margin-top: auto;
+}
+
+.tool-button {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: #f9fafb;
+  color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tool-button:hover {
+  background: #8b5cf6;
+  color: white;
+}
+
+.tool-button i {
+  font-size: 1.2rem;
+}
+
+.diagram-area {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+#myDiagramDiv {
+  width: 100%;
+  height: 100%;
+  background: #ffffff;
+  border: none;
+}
+
+#myDiagramDiv.dark-mode {
+  background: #1f2937;
+  color: #f3f4f6;
+}
+
+/* GoJS Node Styling */
+:root {
+  --node-border-color: #e5e7eb;
+  --node-background: #ffffff;
+  --node-header-bg: #f3f4f6;
+  --node-text-color: #1f2937;
+  --node-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* Dark mode variables */
+.dark-mode {
+  --node-border-color: #4b5563;
+  --node-background: #374151;
+  --node-header-bg: #1f2937;
+  --node-text-color: #f3f4f6;
+  --node-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Entity Editor Modal */
+app-entity-edit-form {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 100%;
 }

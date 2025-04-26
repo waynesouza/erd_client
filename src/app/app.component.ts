@@ -14,6 +14,7 @@ export class AppComponent {
 
   isLoggedIn = false;
   eventBusSub?: Subscription;
+  isSidebarCollapsed = false;
 
   constructor(private storageService: StorageService, private authService: AuthService,
               private eventBusService: EventBusService, private router: Router) { }
@@ -30,7 +31,7 @@ export class AppComponent {
     this.authService.logout().subscribe({
       next: () => {
         this.storageService.clean();
-        this.router.navigate(['/login']).then();
+        void this.router.navigate(['/login']);
       }, error: err => {
         console.log('Here: ', err);
       }
@@ -40,6 +41,10 @@ export class AppComponent {
   isLoginOrRegister(): boolean {
     const currentRoute = this.router.url;
     return currentRoute.includes('/login') || currentRoute.includes('/register');
+  }
+
+  onSidebarCollapse(collapsed: boolean): void {
+    this.isSidebarCollapsed = collapsed;
   }
 
 }

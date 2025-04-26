@@ -1,13 +1,12 @@
 <div class="d-flex" *ngIf="!isLoginOrRegister()">
   <div>
-    <app-side-bar></app-side-bar>
+    <app-side-bar (sidebarCollapsed)="onSidebarCollapse($event)"></app-side-bar>
   </div>
-  <div class="flex-grow-1">
+  <div class="main-content" [class.expanded]="isSidebarCollapsed">
     <router-outlet></router-outlet>
   </div>
 </div>
 
 <div *ngIf="isLoginOrRegister()">
-  <div class="flex-grow-1">
-    <router-outlet></router-outlet>
-  </div>
+  <router-outlet></router-outlet>
+</div>

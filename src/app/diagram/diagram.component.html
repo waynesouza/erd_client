@@ -1,25 +1,35 @@
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-1 d-flex flex-column justify-content-around align-items-center">
-      <button class="btn btn-primary" type="button" (click)="addEntity()">
+<div class="diagram-container">
+  <div class="toolbar">
+    <div class="tool-group">
+      <button class="tool-button" type="button" (click)="addEntity()" title="Add Table">
         <i class="bi bi-table"></i>
       </button>
-      <button class="btn btn-primary" type="button" (click)="selectRelationshipType('1:1')">
+    </div>
+    <div class="tool-group">
+      <button class="tool-button" type="button" (click)="selectRelationshipType('1:1')" title="One to One Relationship">
         <i class="bi bi-arrows-angle-contract"></i>
       </button>
-      <button class="btn btn-primary" type="button" (click)="selectRelationshipType('1:N')">
+      <button class="tool-button" type="button" (click)="selectRelationshipType('1:N')" title="One to Many Relationship">
         <i class="bi bi-arrow-up-right"></i>
       </button>
-      <button class="btn btn-primary" type="button" (click)="selectRelationshipType('N:N')">
+      <button class="tool-button" type="button" (click)="selectRelationshipType('N:N')" title="Many to Many Relationship">
         <i class="bi bi-arrows-angle-expand"></i>
       </button>
-      <button class="btn btn-primary" type="button" (click)="sendToServer()">
+    </div>
+    <div class="tool-group">
+      <button class="tool-button" type="button" (click)="sendToServer()" title="Save Diagram">
         <i class="bi bi-check-circle"></i>
       </button>
     </div>
-    <div class="col-11" style="height: 100vh;">
-      <div id="myDiagramDiv" [style.background-color]="darkMode ? '#242424' : 'white'"></div>
-      <app-entity-edit-form *ngIf="isEntityEditorModalOpen" [entity]="selectedEntity" (entityUpdated)="handleSave($event)" (entityRemoved)="handleRemove($event)" (close)="closeEntityEditorModal()"></app-entity-edit-form>
-    </div>
+  </div>
+  <div class="diagram-area">
+    <div id="myDiagramDiv" [class.dark-mode]="darkMode"></div>
+    <app-entity-edit-form
+      *ngIf="isEntityEditorModalOpen"
+      [entity]="selectedEntity"
+      (entityUpdated)="handleSave($event)"
+      (entityRemoved)="handleRemove($event)"
+      (close)="closeEntityEditorModal()">
+    </app-entity-edit-form>
   </div>
 </div>

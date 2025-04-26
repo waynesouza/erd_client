@@ -1,0 +1,372 @@
+// Variables
+$sidebar-width: 250px;
+$sidebar-bg: #ffffff;
+$hover-bg: #f3f4f6;
+$accent-color: #8b5cf6;
+$text-color: #1f2937;
+$border-color: #e5e7eb;
+$transition-duration: 0.3s;
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+}
+
+@mixin button-base {
+  background: $accent-color;
+  border: none;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  @include flex-center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 500;
+  @include transition;
+
+  &:hover {
+    background: darken($accent-color, 5%);
+  }
+
+  i {
+    font-size: 1.1rem;
+  }
+}
+
+@mixin transition {
+  transition: all $transition-duration ease;
+}
+
+// Styles
+.sidebar {
+  width: $sidebar-width;
+  height: 100vh;
+  background-color: $sidebar-bg;
+  border-right: 1px solid $border-color;
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  flex-direction: column;
+  @include transition;
+  z-index: 1000;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+
+  &.collapsed {
+    width: 60px;
+
+    .toggle-btn i {
+      transform: rotate(180deg);
+    }
+
+    .section-header span,
+    .project-name span,
+    .create-project-btn span,
+    .user-info .user-details,
+    .user-actions button span {
+      display: none;
+    }
+
+    .projects-section {
+      .project-item {
+        display: none;
+      }
+
+      .section-header {
+        padding: 0;
+        justify-content: center;
+
+        i {
+          margin: 0;
+          font-size: 1.4rem;
+        }
+      }
+    }
+
+    .user-section {
+      padding: 10px;
+
+      .user-info {
+        margin-bottom: 10px;
+      }
+
+      .user-avatar {
+        margin: 0 auto;
+        min-width: 40px; // Garante largura mínima
+      }
+
+      .user-actions {
+        button {
+          width: 40px;
+          height: 40px;
+          padding: 0;
+          margin: 0 auto;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          i {
+            font-size: 1.2rem;
+            margin: 0;
+          }
+        }
+      }
+    }
+  }
+
+  .toggle-btn {
+    position: absolute;
+    right: -12px;
+    top: 20px;
+    background: $accent-color;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    color: white;
+    cursor: pointer;
+    @include flex-center;
+    justify-content: center;
+    @include transition;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    i {
+      @include transition;
+      font-size: 12px;
+    }
+
+    &:hover {
+      background: darken($accent-color, 5%);
+      transform: scale(1.05);
+    }
+  }
+}
+
+// Logo Space
+.logo-space {
+  height: 80px;
+  padding: 20px;
+  border-bottom: 1px solid $border-color;
+}
+
+// Sidebar Content
+.sidebar-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0; // Important for Firefox
+}
+
+// Projects Section
+.projects-section {
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+
+  .section-header {
+    @include flex-center;
+    gap: 12px;
+    padding: 0 20px 20px;
+    color: $text-color;
+    font-weight: 500;
+
+    i {
+      font-size: 1.2rem;
+      color: $accent-color;
+    }
+  }
+
+  .projects-list {
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 0 10px;
+
+    .project-item {
+      @include flex-center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      margin-bottom: 4px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: $text-color;
+      position: relative;
+      @include transition;
+
+      &:hover {
+        background: $hover-bg;
+      }
+
+      .project-name {
+        @include flex-center;
+        gap: 10px;
+
+        i {
+          color: $accent-color;
+          font-size: 1rem;
+        }
+
+        span {
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+      }
+
+      .edit-btn {
+        background: transparent;
+        border: none;
+        color: $text-color;
+        padding: 4px;
+        border-radius: 4px;
+        cursor: pointer;
+        opacity: 0;
+        @include transition;
+
+        &:hover {
+          background: darken($hover-bg, 5%);
+          color: $accent-color;
+        }
+      }
+
+      &:hover .edit-btn {
+        opacity: 1;
+      }
+    }
+  }
+
+  .create-project-btn {
+    @include button-base;
+    margin: 10px auto;
+    width: calc(100% - 40px); // 20px de margem em cada lado
+  }
+}
+
+// Diagram Tools
+.diagram-tools {
+  flex: 1;
+  padding: 20px 10px;
+  border-top: 1px solid $border-color;
+
+  .tool-group {
+    padding: 10px;
+    border-bottom: 1px solid $border-color;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .tool-button {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 8px;
+      background: $hover-bg;
+      color: $text-color;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      @include transition;
+
+      &:hover {
+        background: $accent-color;
+        color: white;
+        transform: translateY(-1px);
+      }
+
+      i {
+        font-size: 1.2rem;
+      }
+    }
+  }
+}
+
+// User section at bottom
+.user-section {
+  padding: 15px;
+  border-top: 1px solid $border-color;
+  background-color: $hover-bg;
+  margin-top: auto;
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+
+  .user-info {
+    @include flex-center;
+    gap: 12px;
+    margin-bottom: 15px;
+
+    .user-avatar {
+      width: 40px;
+      height: 40px;
+      min-width: 40px; // Garante largura mínima
+      @include flex-center;
+      justify-content: center;
+      border-radius: 50%;
+      background: white;
+      color: $accent-color;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+      i {
+        font-size: 1.6rem;
+      }
+    }
+
+    .user-details {
+      overflow: hidden;
+
+      .user-name {
+        font-weight: 500;
+        color: $text-color;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .user-email {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+
+  .user-actions {
+    button {
+      @include button-base;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+  }
+}
+
+// Scrollbar styling
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: $hover-bg;
+}
+
+::-webkit-scrollbar-thumb {
+  background: darken($hover-bg, 10%);
+  border-radius: 3px;
+
+  &:hover {
+    background: darken($hover-bg, 15%);
+  }
+}
