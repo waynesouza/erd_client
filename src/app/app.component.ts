@@ -37,4 +37,9 @@ export class AppComponent {
     });
   }
 
+  isLoginOrRegister(): boolean {
+    const currentRoute = this.router.url;
+    return currentRoute.includes('/login') || currentRoute.includes('/register');
+  }
+
 }

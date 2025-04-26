@@ -1,4 +1,4 @@
-<div class="d-flex">
+<div class="d-flex" *ngIf="!isLoginOrRegister()">
   <div>
     <app-side-bar></app-side-bar>
   </div>
@@ -6,3 +6,8 @@
     <router-outlet></router-outlet>
   </div>
 </div>
+
+<div *ngIf="isLoginOrRegister()">
+  <div class="flex-grow-1">
+    <router-outlet></router-outlet>
+  </div>
