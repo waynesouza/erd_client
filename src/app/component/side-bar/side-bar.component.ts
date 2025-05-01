@@ -6,6 +6,7 @@ import { StorageService } from '../../service/storage.service';
 import { SharedService } from '../../service/shared.service';
 import { Subscription, Observable } from 'rxjs';
 import { AuthResponseModel } from "../../model/auth-response.model";
+import { Project } from "../../model/project.model";
 
 interface UserResponse {
   name: string;
@@ -13,14 +14,14 @@ interface UserResponse {
   avatar?: string;
 }
 
-interface Project {
-  id: string;
-  name: string;
-  description?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-  // Add other project properties as needed
-}
+// interface Project {
+//   id: string;
+//   name: string;
+//   description?: string;
+//   createdAt?: Date;
+//   updatedAt?: Date;
+//   // Add other project properties as needed
+// }
 
 @Component({
   selector: 'app-side-bar',
@@ -87,10 +88,10 @@ export class SideBarComponent implements OnInit, OnDestroy {
     this.isModalOpen = true;
   }
 
-  openEditModal(project: Project, event: MouseEvent): void {
+  async openEditModal(project: Project, event: MouseEvent): Promise<void> {
     event.stopPropagation();
     this.isEditMode = true;
-    this.getProjectDataById(project.id);
+    await this.getProjectDataById(project.id);
     this.isModalOpen = true;
   }
 
@@ -103,7 +104,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
     this.hoveredProjectId = projectId;
   }
 
-  getProjectDataById(id: string): void {
+  async getProjectDataById(id: string): Promise<void> {
     this.subscription.add(
       this.projectService.getProjectById(id).subscribe(response => {
         if (response.body) {

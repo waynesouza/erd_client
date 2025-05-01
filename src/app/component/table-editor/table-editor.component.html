@@ -1,26 +1,85 @@
-<div class="container">
-  <form>
-    <div class="form-group">
-      <label for="tableName">Table Name</label>
-      <input type="text" class="form-control" id="tableName" [(ngModel)]="entity.key" placeholder="Table Name" name="tableName" required>
-    </div>
-    <div *ngFor="let column of entity.items; let i = index">
+<div class="table-editor-container">
+  <div class="welcome-section">
+    <h1>Table Editor</h1>
+    <p>Design your database table structure with ease.</p>
+    <div class="background-pattern"></div>
+  </div>
+  <div class="form-section">
+    <h2>Edit Table</h2>
+    <form>
       <div class="form-group">
-        <label for="'columnName-' + i">Column Name</label>
-        <input type="text" class="form-control" id="'columnName-' + i" [(ngModel)]="column.name" [name]="'columnName-' + i" placeholder="Column Name" required>
+        <input type="text"
+               class="form-control"
+               id="tableName"
+               [(ngModel)]="entity.key"
+               placeholder="Table Name"
+               name="tableName"
+               required>
       </div>
-      <div class="form-group">
-        <label for="'columnType-' + i">Column Type</label>
-        <select class="form-control" id="'columnType-' + i" [(ngModel)]="column.type" [name]="'columnType-' + i" required>
-          <option value="string">String</option>
-          <option value="number">Number</option>
-          <option value="boolean">Boolean</option>
-          <option value="date">Date</option>
-        </select>
+
+      <div class="table-container">
+        <table class="attribute-table">
+          <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>PK</th>
+            <th>UN</th>
+            <th>NN</th>
+            <th>AI</th>
+            <th>Default</th>
+            <th></th>
+          </tr>
+          </thead>
+          <tbody>
+          <tr *ngFor="let column of entity.items; let i = index">
+            <td>
+              <input type="text"
+                     class="form-control"
+                     [(ngModel)]="column.name"
+                     [name]="'columnName-' + i"
+                     placeholder="Column Name"
+                     required>
+            </td>
+            <td>
+              <select class="form-control"
+                      [(ngModel)]="column.type"
+                      [name]="'columnType-' + i"
+                      required>
+                <option *ngFor="let type of dataTypes" [value]="type">{{type}}</option>
+              </select>
+            </td>
+            <td><input type="checkbox" [(ngModel)]="column.pk" [name]="'pk-' + i"></td>
+            <td><input type="checkbox" [(ngModel)]="column.unique" [name]="'un-' + i"></td>
+            <td><input type="checkbox" [(ngModel)]="column.nullable" [name]="'nn-' + i"></td>
+            <td><input type="checkbox" [(ngModel)]="column.autoIncrement" [name]="'ai-' + i"></td>
+            <td>
+              <input type="text"
+                     class="form-control"
+                     [(ngModel)]="column.defaultValue"
+                     [name]="'default-' + i"
+                     placeholder="Default">
+            </td>
+            <td>
+              <button type="button" class="btn-remove" (click)="removeColumn(i)">
+                <i class="bi bi-trash"></i>
+              </button>
+            </td>
+          </tr>
+          </tbody>
+        </table>
       </div>
-      <button class="btn btn-danger" (click)="removeColumn(i)">Remove</button>
-    </div>
-    <button class="btn btn-primary" (click)="addColumn()">Add Column</button>
-    <button class="btn btn-success" (click)="saveTable()">Save</button>
-  </form>
+
+      <div class="button-group">
+        <button type="button" class="btn-add" (click)="addColumn()">
+          <i class="bi bi-plus-lg"></i>
+          Add Column
+        </button>
+        <button type="button" class="btn-save" (click)="saveTable()">
+          <i class="bi bi-check-lg"></i>
+          Save Table
+        </button>
+      </div>
+    </form>
+  </div>
 </div>
