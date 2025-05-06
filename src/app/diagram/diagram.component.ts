@@ -54,21 +54,46 @@ export class DiagramComponent implements OnInit, OnDestroy {
     this.sharedService.currentProjectId.subscribe(projectId => {
       if (projectId) {
         this.projectId = projectId;
-        this.diagramService.getDiagram(projectId).subscribe({
-          next: (diagramData: DiagramModel) => {
-            this.locations = diagramData.nodeDataArray.map((entity: EntityModel) => {
-              return new go.Point(Number(entity.location.x), Number(entity.location.y));
-            });
-            this.entities = diagramData.nodeDataArray;
-            this.relationships = diagramData.linkDataArray;
-            this.initializeDiagram();
-            this.remakeDiagram();
-          }, error: () => {
-            this.initializeDiagram();
-          }
-        });
+        this.loadDiagramData(projectId);
       }
     });
+  }
+
+  private loadDiagramData(projectId: string): void {
+    this.diagramService.getDiagram(projectId).subscribe({
+      next: (diagramData: DiagramModel) => {
+        console.log('Received diagram data:', diagramData);
+        if (diagramData && diagramData.nodeDataArray) {
+          this.locations = diagramData.nodeDataArray.map((entity: EntityModel) => {
+            return new go.Point(Number(entity.location?.x || 0), Number(entity.location?.y || 0));
+          });
+          this.entities = diagramData.nodeDataArray;
+          this.relationships = diagramData.linkDataArray || [];
+          this.setupDiagram();
+        } else {
+          console.error('Invalid diagram data received:', diagramData);
+          this.setupEmptyDiagram();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading diagram:', error);
+        this.setupEmptyDiagram();
+      }
+    });
+  }
+
+  private setupDiagram(): void {
+    this.initializeDiagram();
+    if (this.entities.length > 0 || this.relationships.length > 0) {
+      this.remakeDiagram();
+    }
+  }
+
+  private setupEmptyDiagram(): void {
+    this.entities = [];
+    this.relationships = [];
+    this.locations = [];
+    this.initializeDiagram();
   }
 
   ngOnDestroy(): void {
@@ -77,7 +102,6 @@ export class DiagramComponent implements OnInit, OnDestroy {
       // @ts-ignore
       this.diagram = null;
     }
-
     if (this.stompClient) {
       this.stompClient.disconnect();
     }
@@ -88,16 +112,6 @@ export class DiagramComponent implements OnInit, OnDestroy {
       this.diagram.div = null;
       // @ts-ignore
       this.diagram = null;
-    }
-
-    const diagramDiv = document.getElementById('myDiagramDiv');
-    if (!diagramDiv) {
-      console.error('Diagram div not found');
-      return;
-    }
-
-    while (diagramDiv.firstChild) {
-      diagramDiv.removeChild(diagramDiv.firstChild);
     }
 
     this.diagram = $(go.Diagram, 'myDiagramDiv', {
@@ -501,14 +515,22 @@ export class DiagramComponent implements OnInit, OnDestroy {
       this.initializeDiagram();
     }
 
-    this.entities.forEach((entity: EntityModel, index: number): void => {
-      entity.location = this.locations[index];
-    });
+    try {
+      this.entities.forEach((entity: EntityModel, index: number): void => {
+        if (this.locations[index]) {
+          entity.location = this.locations[index];
+        } else {
+          entity.location = new go.Point(Math.random() * 400, Math.random() * 400);
+        }
+      });
 
-    this.diagram.model = new go.GraphLinksModel({
-      nodeDataArray: this.entities,
-      linkDataArray: this.relationships
-    });
+      this.diagram.model = new go.GraphLinksModel({
+        nodeDataArray: this.entities,
+        linkDataArray: this.relationships
+      });
+    } catch (error) {
+      console.error('Error remaking diagram:', error);
+    }
   }
 
   receiveMessageAndRemakeDiagram(message: any): void {
