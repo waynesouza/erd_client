@@ -19,7 +19,7 @@ const $ = go.GraphObject.make;
   templateUrl: './diagram.component.html',
   styleUrls: ['./diagram.component.css']
 })
-export class DiagramComponent implements OnInit {
+export class DiagramComponent implements OnInit, OnDestroy {
 
   @Input() entities: EntityModel[] = [];
   @Input() selectedProjectId: string = '';
@@ -71,7 +71,35 @@ export class DiagramComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    if (this.diagram) {
+      this.diagram.div = null;
+      // @ts-ignore
+      this.diagram = null;
+    }
+
+    if (this.stompClient) {
+      this.stompClient.disconnect();
+    }
+  }
+
   private initializeDiagram(): void {
+    if (this.diagram) {
+      this.diagram.div = null;
+      // @ts-ignore
+      this.diagram = null;
+    }
+
+    const diagramDiv = document.getElementById('myDiagramDiv');
+    if (!diagramDiv) {
+      console.error('Diagram div not found');
+      return;
+    }
+
+    while (diagramDiv.firstChild) {
+      diagramDiv.removeChild(diagramDiv.firstChild);
+    }
+
     this.diagram = $(go.Diagram, 'myDiagramDiv', {
       initialContentAlignment: go.Spot.Center,
       "animationManager.isEnabled": false,
@@ -469,9 +497,14 @@ export class DiagramComponent implements OnInit {
   }
 
   remakeDiagram(): void {
+    if (!this.diagram) {
+      this.initializeDiagram();
+    }
+
     this.entities.forEach((entity: EntityModel, index: number): void => {
       entity.location = this.locations[index];
     });
+
     this.diagram.model = new go.GraphLinksModel({
       nodeDataArray: this.entities,
       linkDataArray: this.relationships
