@@ -73,6 +73,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
     this.subscription.add(
       // @ts-ignore
       this.projectService.getProjectsByUserEmail(this.user.email).subscribe((response: Project[]) => {
+        console.log('Projects:', response);
         this.projects = response;
       })
     );
@@ -164,6 +165,38 @@ export class SideBarComponent implements OnInit, OnDestroy {
       this.projectService.deleteProject(this.selectedProject.id).subscribe({
         next: () => {
           this.selectedProject = null;
+          this.buildProjectList();
+        },
+        error: (error: any) => {
+          console.error('Error deleting project:', error);
+          alert('Failed to delete project. Please try again.');
+        }
+      });
+    }
+  }
+
+  isOwnerOfProject(project: Project): boolean {
+    if (!project || !this.user) {
+      return false;
+    }
+    console.log('Project:', project);
+    return project.usersDto.some(
+      member => member.email === this.user.email && member.role === 'OWNER'
+    );
+  }
+
+  deleteProject(project: Project, event: MouseEvent): void {
+    event.stopPropagation();
+    if (!this.isOwnerOfProject(project)) {
+      alert('Only the project owner can delete this project.');
+      return;
+    }
+    if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+      this.projectService.deleteProject(project.id).subscribe({
+        next: () => {
+          if (this.selectedProject && this.selectedProject.id === project.id) {
+            this.selectedProject = null;
+          }
           this.buildProjectList();
         },
         error: (error: any) => {

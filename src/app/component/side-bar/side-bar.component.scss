@@ -215,24 +215,31 @@ $transition-duration: 0.3s;
         }
       }
 
-      .edit-btn {
+      .project-actions {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+      }
+
+      .delete-btn {
         background: transparent;
         border: none;
-        color: $text-color;
+        color: #dc3545;
         padding: 4px;
         border-radius: 4px;
         cursor: pointer;
-        opacity: 0;
-        @include transition;
-
-        &:hover {
-          background: darken($hover-bg, 5%);
-          color: $accent-color;
-        }
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
       }
 
-      &:hover .edit-btn {
-        opacity: 1;
+      .delete-btn:hover {
+        background-color: #ffebee;
+        color: #c82333;
+      }
+
+      .delete-btn i {
+        font-size: 1.1rem;
       }
     }
   }

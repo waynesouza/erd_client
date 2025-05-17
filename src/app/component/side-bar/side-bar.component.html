@@ -23,22 +23,20 @@
             <i class="bi bi-folder2"></i>
             <span>{{ project.name }}</span>
           </div>
-          <button class="edit-btn" *ngIf="hoveredProjectId === project.id" (click)="openEditModal(project, $event)">
-            <i class="bi bi-pencil-square"></i>
-          </button>
+          <div class="project-actions" *ngIf="hoveredProjectId === project.id">
+            <button class="edit-btn" (click)="openEditModal(project, $event)">
+              <i class="bi bi-pencil-square"></i>
+            </button>
+            <button class="delete-btn" *ngIf="isOwnerOfProject(project)" (click)="deleteProject(project, $event)">
+              <i class="bi bi-trash"></i>
+            </button>
+          </div>
         </div>
       </div>
 
       <button class="create-project-btn" *ngIf="!isCollapsed" (click)="openCreateModal()">
         <i class="bi bi-plus-lg"></i>
         <span>New Project</span>
-      </button>
-
-      <button class="delete-project-btn"
-              *ngIf="selectedProject && isOwnerOfSelectedProject()"
-              (click)="deleteSelectedProject()">
-        <i class="bi bi-trash"></i>
-        <span>Delete Project</span>
       </button>
     </div>
   </div>
