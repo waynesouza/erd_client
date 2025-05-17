@@ -12,105 +12,74 @@
 }
 
 .modal-container {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  width: 100%;
+  max-width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.form-section {
   display: flex;
   flex-direction: column;
-  width: 600px;
-  max-height: 80vh;
-  background: #ffffff;
-  border-radius: 12px;
-  overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  gap: 20px;
 }
 
 .modal-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding-bottom: 24px;
-  margin-bottom: 24px;
-  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 20px;
 }
 
 .modal-header h1 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: #1f2937;
   margin: 0;
+  font-size: 24px;
+  color: #333;
 }
 
 .btn-close {
   background: none;
   border: none;
-  color: #6b7280;
-  padding: 8px;
-  border-radius: 8px;
+  font-size: 20px;
   cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.btn-close:hover {
-  background: #f3f4f6;
-  color: #4b5563;
-}
-
-.btn-close i {
-  font-size: 1.2rem;
-}
-
-.form-section {
-  flex: 1;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  background: #ffffff;
-  overflow-y: auto;
+  color: #666;
 }
 
 .form-group {
-  margin-bottom: 1.5rem;
+  margin-bottom: 16px;
 }
 
 .form-control {
   width: 100%;
-  padding: 12px 16px;
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: border-color 0.2s;
-  background: #f9fafb;
-}
-
-.form-control:focus {
-  outline: none;
-  border-color: #8b5cf6;
-  background: #ffffff;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
 textarea.form-control {
   resize: vertical;
-  min-height: 100px;
+  min-height: 80px;
 }
 
-.members-section {
-  margin-top: 2rem;
-  border-top: 1px solid #e5e7eb;
-  padding-top: 2rem;
+.team-section {
+  margin-top: 24px;
 }
 
-.members-section h2 {
-  font-size: 1.25rem;
-  color: #1f2937;
-  margin-bottom: 1.5rem;
+.team-section h2 {
+  font-size: 18px;
+  color: #333;
+  margin-bottom: 16px;
 }
 
 .table-container {
-  margin-bottom: 1.5rem;
-  border-radius: 8px;
+  margin-bottom: 16px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
   overflow: hidden;
-  border: 1px solid #e5e7eb;
 }
 
 .members-table {
@@ -118,18 +87,16 @@ textarea.form-control {
   border-collapse: collapse;
 }
 
-.members-table th {
-  background: #f3f4f6;
-  padding: 12px;
-  text-align: left;
-  font-weight: 600;
-  color: #4b5563;
-  font-size: 0.9rem;
-}
-
+.members-table th,
 .members-table td {
   padding: 12px;
-  border-top: 1px solid #e5e7eb;
+  text-align: left;
+  border-bottom: 1px solid #ddd;
+}
+
+.members-table th {
+  background-color: #f5f5f5;
+  font-weight: 600;
 }
 
 .member-info {
@@ -142,123 +109,166 @@ textarea.form-control {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #f3f4f6;
+  background-color: #f0f0f0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #6b7280;
+  color: #666;
 }
 
-.member-avatar i {
-  font-size: 1.2rem;
+.member-details {
+  display: flex;
+  flex-direction: column;
 }
 
 .member-email {
-  color: #1f2937;
-  font-size: 0.9rem;
+  font-size: 14px;
+  color: #333;
 }
 
 .role-badge {
-  display: inline-block;
   padding: 4px 8px;
   border-radius: 4px;
-  font-size: 0.8rem;
+  font-size: 12px;
   font-weight: 500;
 }
 
 .role-badge.owner {
-  background: #fee2e2;
-  color: #ef4444;
+  background-color: #e3f2fd;
+  color: #1976d2;
 }
 
 .role-badge.editor {
-  background: #e0e7ff;
-  color: #6366f1;
+  background-color: #e8f5e9;
+  color: #2e7d32;
 }
 
 .role-badge.viewer {
-  background: #f3f4f6;
-  color: #6b7280;
+  background-color: #f5f5f5;
+  color: #616161;
+}
+
+.role-selector select {
+  padding: 4px 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
 }
 
 .member-actions {
   display: flex;
-  justify-content: flex-end;
+  gap: 8px;
 }
 
 .btn-remove {
   background: none;
   border: none;
-  color: #ef4444;
-  padding: 6px;
-  border-radius: 4px;
+  color: #dc3545;
   cursor: pointer;
-  transition: all 0.2s ease;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
 }
 
 .btn-remove:hover {
-  background: #fee2e2;
+  background-color: #ffebee;
 }
 
 .add-member {
-  margin-top: 1rem;
+  margin-top: 16px;
 }
 
 .btn-add-member {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 8px;
   padding: 8px 16px;
-  background: #f3f4f6;
-  color: #6b7280;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.9rem;
-  font-weight: 500;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #333;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s;
 }
 
 .btn-add-member:hover {
-  background: #e5e7eb;
+  background-color: #e9ecef;
+}
+
+.add-member-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.add-member-modal .modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 400px;
+}
+
+.add-member-modal h3 {
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  color: #333;
 }
 
 .button-group {
   display: flex;
-  gap: 1rem;
-  margin-top: 2rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid #e5e7eb;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
 }
 
 .btn-cancel {
-  padding: 12px 24px;
-  background: #f3f4f6;
-  color: #6b7280;
-  border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
+  padding: 8px 16px;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  color: #333;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s;
 }
 
 .btn-cancel:hover {
-  background: #e5e7eb;
+  background-color: #e9ecef;
 }
 
 .btn-save {
-  padding: 12px 24px;
-  background: #8b5cf6;
-  color: white;
+  padding: 8px 16px;
+  background-color: #007bff;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
-  font-weight: 500;
+  border-radius: 4px;
+  color: white;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background-color 0.2s;
 }
 
 .btn-save:hover {
-  background: #7c3aed;
+  background-color: #0056b3;
+}
+
+.btn-delete {
+  padding: 8px 16px;
+  background-color: #dc3545;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-right: auto;
+}
+
+.btn-delete:hover {
+  background-color: #c82333;
 }

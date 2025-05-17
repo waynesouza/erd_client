@@ -105,13 +105,23 @@ export class SideBarComponent implements OnInit, OnDestroy {
   }
 
   async getProjectDataById(id: string): Promise<void> {
-    this.subscription.add(
-      this.projectService.getProjectById(id).subscribe(response => {
-        if (response.body) {
-          this.selectedProject = response.body as Project;
-        }
-      })
-    );
+    return new Promise((resolve, reject) => {
+      this.subscription.add(
+        this.projectService.getProjectById(id).subscribe({
+          next: (response) => {
+            if (response) {
+              // @ts-ignore
+              this.selectedProject = response;
+            }
+            resolve();
+          },
+          error: (err) => {
+            console.error('Erro ao buscar dados do projeto:', err);
+            reject(err);
+          }
+        })
+      );
+    });
   }
 
   ngOnDestroy(): void {
