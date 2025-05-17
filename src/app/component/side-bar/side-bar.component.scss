@@ -370,3 +370,26 @@ $transition-duration: 0.3s;
     background: darken($hover-bg, 15%);
   }
 }
+
+.delete-project-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 8px 16px;
+  background-color: #dc3545;
+  border: none;
+  border-radius: 4px;
+  color: white;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.delete-project-btn:hover {
+  background-color: #c82333;
+}
+
+.delete-project-btn i {
+  font-size: 16px;
+}

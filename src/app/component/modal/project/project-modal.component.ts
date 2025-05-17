@@ -82,7 +82,7 @@ export class ProjectModalComponent implements OnInit {
     }
 
     const currentMember = this.projectToEdit.usersDto.find(
-      member => member.id === this.currentUser?.id
+      member => member.email === this.currentUser?.email
     );
 
     return currentMember?.role === 'OWNER';

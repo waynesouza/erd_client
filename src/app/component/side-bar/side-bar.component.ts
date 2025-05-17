@@ -142,4 +142,35 @@ export class SideBarComponent implements OnInit, OnDestroy {
       void this.router.navigate(['/login']);
     }
   }
+
+  isOwnerOfSelectedProject(): boolean {
+    if (!this.selectedProject || !this.user) {
+      return false;
+    }
+    return this.selectedProject.usersDto.some(
+      member => member.email === this.user.email && member.role === 'OWNER'
+    );
+  }
+
+  deleteSelectedProject(): void {
+    if (!this.selectedProject) {
+      return;
+    }
+    if (!this.isOwnerOfSelectedProject()) {
+      alert('Only the project owner can delete this project.');
+      return;
+    }
+    if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+      this.projectService.deleteProject(this.selectedProject.id).subscribe({
+        next: () => {
+          this.selectedProject = null;
+          this.buildProjectList();
+        },
+        error: (error: any) => {
+          console.error('Error deleting project:', error);
+          alert('Failed to delete project. Please try again.');
+        }
+      });
+    }
+  }
 }

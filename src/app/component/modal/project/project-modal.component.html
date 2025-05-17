@@ -29,7 +29,16 @@
       </div>
 
       <div class="team-section" *ngIf="isEditMode">
-        <h2>Team Members</h2>
+        <div class="team-header">
+          <h2>Team Members</h2>
+          <button type="button"
+                  class="btn-add-member"
+                  *ngIf="isOwner()"
+                  (click)="openAddMemberModal()">
+            <i class="bi bi-person-plus"></i>
+            Add Member
+          </button>
+        </div>
 
         <div class="table-container">
           <table class="members-table">
@@ -85,40 +94,31 @@
             </tbody>
           </table>
         </div>
+      </div>
 
-        <div class="add-member" *ngIf="isOwner()">
-          <button type="button"
-                  class="btn-add-member"
-                  (click)="openAddMemberModal()">
-            <i class="bi bi-person-plus"></i>
-            Add Member
-          </button>
-        </div>
-
-        <div class="add-member-modal" *ngIf="showAddMemberModal">
-          <div class="modal-content">
-            <h3>Add New Member</h3>
-            <div class="form-group">
-              <input type="email"
-                     class="form-control"
-                     [(ngModel)]="newMemberEmail"
-                     placeholder="Member Email"
-                     required>
-            </div>
-            <div class="form-group">
-              <select class="form-control" [(ngModel)]="newMemberRole">
-                <option value="EDITOR">Editor</option>
-                <option value="VIEWER">Viewer</option>
-              </select>
-            </div>
-            <div class="button-group">
-              <button type="button" class="btn-cancel" (click)="showAddMemberModal = false">
-                Cancel
-              </button>
-              <button type="button" class="btn-save" (click)="addMember()">
-                Add Member
-              </button>
-            </div>
+      <div class="add-member-modal" *ngIf="showAddMemberModal">
+        <div class="modal-content">
+          <h3>Add New Member</h3>
+          <div class="form-group">
+            <input type="email"
+                   class="form-control"
+                   [(ngModel)]="newMemberEmail"
+                   placeholder="Member Email"
+                   required>
+          </div>
+          <div class="form-group">
+            <select class="form-control" [(ngModel)]="newMemberRole">
+              <option value="EDITOR">Editor</option>
+              <option value="VIEWER">Viewer</option>
+            </select>
+          </div>
+          <div class="button-group">
+            <button type="button" class="btn-cancel" (click)="showAddMemberModal = false">
+              Cancel
+            </button>
+            <button type="button" class="btn-save" (click)="addMember()">
+              Add Member
+            </button>
           </div>
         </div>
       </div>
