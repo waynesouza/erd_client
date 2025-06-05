@@ -14,15 +14,6 @@ interface UserResponse {
   avatar?: string;
 }
 
-// interface Project {
-//   id: string;
-//   name: string;
-//   description?: string;
-//   createdAt?: Date;
-//   updatedAt?: Date;
-//   // Add other project properties as needed
-// }
-
 @Component({
   selector: 'app-side-bar',
   templateUrl: './side-bar.component.html',
@@ -148,7 +139,8 @@ export class SideBarComponent implements OnInit, OnDestroy {
     if (!this.selectedProject || !this.user) {
       return false;
     }
-    return this.selectedProject.usersDto.some(
+    // @ts-ignore
+    return this.selectedProject?.usersDto.some(
       member => member.email === this.user.email && member.role === 'OWNER'
     );
   }
@@ -180,6 +172,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
       return false;
     }
     console.log('Project:', project);
+    // @ts-ignore
     return project.usersDto.some(
       member => member.email === this.user.email && member.role === 'OWNER'
     );

@@ -173,7 +173,7 @@ export class ProjectModalComponent implements OnInit {
     });
   }
 
-  updateMemberRole(member: ProjectUser, newRole: 'OWNER' | 'EDITOR' | 'VIEWER'): void {
+  updateMemberRole(member: ProjectUser, newRole: string): void {
     if (!this.isOwner() || !this.projectToEdit) {
       return;
     }

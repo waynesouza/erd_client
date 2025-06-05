@@ -1,7 +1,7 @@
 export interface ProjectUser {
   id: string;
   email: string;
-  role: 'OWNER' | 'EDITOR' | 'VIEWER';
+  role: string;
 }
 
 export interface Project {
@@ -9,7 +9,7 @@ export interface Project {
   name: string;
   description: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
   usersDto: ProjectUser[];
 }
 
