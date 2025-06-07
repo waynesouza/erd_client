@@ -51,8 +51,20 @@ export class SideBarComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
-    this.authService.logout();
-    void this.router.navigate(['/login']);
+    this.authService.logout().subscribe({
+      next: () => {
+        console.log('Logout successful');
+        this.sharedService.clearProjectId();
+        void this.router.navigate(['/login']);
+      },
+      error: (error: any) => {
+        console.error('Logout error:', error);
+        // Even if server logout fails, clear local storage and redirect
+        this.authService.setLoggedIn(false);
+        this.sharedService.clearProjectId();
+        void this.router.navigate(['/login']);
+      }
+    });
   }
 
   isLoginOrRegisterRoute(): boolean {

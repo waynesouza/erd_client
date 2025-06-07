@@ -221,6 +221,28 @@ $transition-duration: 0.3s;
         align-items: center;
       }
 
+      .edit-btn {
+        background: transparent;
+        border: none;
+        color: $accent-color;
+        padding: 4px;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+          background-color: rgba($accent-color, 0.1);
+          transform: scale(1.1);
+        }
+
+        i {
+          font-size: 1.1rem;
+        }
+      }
+
       .delete-btn {
         background: transparent;
         border: none;

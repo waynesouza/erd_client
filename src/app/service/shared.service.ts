@@ -12,4 +12,8 @@ export class SharedService {
     this.projectIdSource.next(projectId);
   }
 
+  clearProjectId() {
+    this.projectIdSource.next(null);
+  }
+
 }
