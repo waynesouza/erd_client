@@ -10,6 +10,11 @@ import { IntermediaryEntityModel } from '../model/intermediary-entity.model';
 import { AttributeModel } from '../model/attribute.model';
 import { LinkDataModel } from '../model/link-data.model';
 import { DdlService } from '../service/ddl.service';
+import { CollaborationService, EntityLock, CollaborationMessage } from '../service/collaboration.service';
+import { ProjectService } from '../service/project.service';
+import { Project } from '../model/project.model';
+import { StorageService } from '../service/storage.service';
+import { AuthResponseModel } from '../model/auth-response.model';
 
 const $ = go.GraphObject.make;
 
@@ -33,6 +38,14 @@ export class DiagramComponent implements OnInit, OnDestroy {
   selectedEntities: any[] = [];
   projectId: string = '';
   isEntityEditorModalOpen: boolean = false;
+
+  // Collaboration properties
+  currentProject: Project | null = null;
+  currentUser: AuthResponseModel | null = null;
+  userRole: string = 'NONE';
+  canEdit: boolean = false;
+  lockedEntities: EntityLock[] = [];
+
   // @ts-ignore
   public diagram: go.Diagram = null;
 
@@ -41,15 +54,20 @@ export class DiagramComponent implements OnInit, OnDestroy {
   constructor(
     private diagramService: DiagramService,
     private sharedService: SharedService,
-    private ddlService: DdlService
-  ) { }
+    private ddlService: DdlService,
+    private collaborationService: CollaborationService,
+    private projectService: ProjectService,
+    private storageService: StorageService
+  ) {
+    this.currentUser = this.storageService.getUser();
+  }
 
   ngOnInit(): void {
-    // Configuração do WebSocket usando @stomp/stompjs
+    // WebSocket configuration using @stomp/stompjs
     this.stompClient = new Client({
       webSocketFactory: () => new SockJS('http://localhost:8080/api/send'),
       connectHeaders: {},
-      debug: (str) => {
+      debug: (str: string) => {
         console.log('STOMP Debug:', str);
       },
       reconnectDelay: 5000,
@@ -57,27 +75,176 @@ export class DiagramComponent implements OnInit, OnDestroy {
       heartbeatOutgoing: 4000,
     });
 
-    this.stompClient.onConnect = (frame) => {
+    this.stompClient.onConnect = (frame: any) => {
       console.log('Connected: ' + frame);
-      this.stompClient.subscribe('/topic/receive', (message) => {
+      this.stompClient.subscribe('/topic/receive', (message: any) => {
         console.log('Received message from server:', message);
         this.receiveMessageAndRemakeDiagram(message);
       });
+
+      // Subscribe to collaboration posts
+      this.stompClient.subscribe('/topic/collaboration', (message: any) => {
+        const collaborationMessage: CollaborationMessage = JSON.parse(message.body);
+        this.collaborationService.processCollaborationMessage(collaborationMessage);
+      });
     };
 
-    this.stompClient.onStompError = (frame) => {
+    this.stompClient.onStompError = (frame: any) => {
       console.error('Broker reported error: ' + frame.headers['message']);
       console.error('Additional details: ' + frame.body);
     };
 
     this.stompClient.activate();
 
-    this.sharedService.currentProjectId.subscribe(projectId => {
+    // Monitor project changes and load data with permissions
+    this.sharedService.currentProjectId.subscribe((projectId: any) => {
       if (projectId) {
         this.projectId = projectId;
+        this.loadProjectData(projectId);
         this.loadDiagramData(projectId);
+      } else {
+        this.clearProjectData();
       }
     });
+
+    // Monitor entity locks and update diagram in real time
+    this.collaborationService.lockedEntities$.subscribe((locks: EntityLock[]) => {
+      console.log('Locks updated via WebSocket:', locks);
+      this.lockedEntities = locks;
+      // Update diagram immediately when locks change
+      setTimeout(() => {
+        this.updateDiagramLockStates();
+        this.refreshDiagramBindings();
+      }, 100);
+    });
+  }
+
+  private loadProjectData(projectId: string): void {
+    this.projectService.getProjectById(projectId).subscribe({
+      next: (project: Project) => {
+        this.currentProject = project;
+        this.userRole = this.collaborationService.getCurrentUserRole(project.usersDto);
+        this.canEdit = this.collaborationService.canEditDiagram(project.usersDto);
+
+        console.log('User role in project:', this.userRole);
+        console.log('Can edit diagram:', this.canEdit);
+
+        // First clear orphaned locks of the current user
+        this.collaborationService.clearUserLocks().subscribe({
+          next: () => {
+            console.log('User locks cleared successfully');
+            // Then load existing project locks
+            this.loadProjectLocks(projectId);
+          },
+          error: (error: any) => {
+            console.warn('Error clearing user locks:', error);
+            // Continue even if you can't clear
+            this.loadProjectLocks(projectId);
+          }
+        });
+      },
+      error: (error: any) => {
+        console.error('Error loading project data:', error);
+        this.currentProject = null;
+        this.userRole = 'NONE';
+        this.canEdit = false;
+      }
+    });
+  }
+
+  private loadProjectLocks(projectId: string): void {
+    this.collaborationService.getProjectLocks(projectId).subscribe({
+      next: (locks: EntityLock[]) => {
+        console.log('Loaded project locks:', locks);
+        this.lockedEntities = locks;
+        this.updateDiagramLockStates();
+      },
+      error: (error: any) => {
+        console.error('Error loading project locks:', error);
+      }
+    });
+  }
+
+  private clearProjectData(): void {
+    this.currentProject = null;
+    this.userRole = 'NONE';
+    this.canEdit = false;
+    this.collaborationService.clearProjectLocks();
+  }
+
+  private updateDiagramLockStates(): void {
+    if (!this.diagram) return;
+
+    // Update visual appearance of entities based on locks
+    this.diagram.nodes.each((node: go.Node) => {
+      const entity = node.data;
+      const isLocked = this.collaborationService.isEntityLockedByOtherUser(entity.id);
+      const isLockedByMe = this.collaborationService.isEntityLockedByCurrentUser(entity.id);
+      const lockInfo = this.lockedEntities.find(lock => lock.entityId === entity.id);
+
+      // Find the main shape of the entity and cast it to go.Shape
+      const mainShapeObj = node.findObject('MAIN_SHAPE');
+      const mainShape = mainShapeObj as go.Shape;
+
+      if (isLocked && lockInfo) {
+        // Entity locked by another user - locked look
+        node.opacity = 0.7;
+        if (mainShape && mainShape instanceof go.Shape) {
+          mainShape.stroke = '#dc2626'; // Red for blocked
+          mainShape.strokeWidth = 3;
+          mainShape.strokeDashArray = [8, 4]; // Dotted line
+        }
+        // Add "not allowed" cursor
+        node.cursor = 'not-allowed';
+        // Add tooltip with lock information
+        node.toolTip = this.createLockTooltip(lockInfo, false);
+      } else if (isLockedByMe && lockInfo) {
+        // Entity locked by current user - edit view
+        node.opacity = 1.0;
+        if (mainShape && mainShape instanceof go.Shape) {
+          mainShape.stroke = '#10b981'; // Green for editing
+          mainShape.strokeWidth = 3;
+          mainShape.strokeDashArray = null; // Solid line
+        }
+        node.cursor = 'pointer';
+        node.toolTip = this.createLockTooltip(lockInfo, true);
+      } else {
+        // Available entity
+        node.opacity = 1.0;
+        if (mainShape && mainShape instanceof go.Shape) {
+          mainShape.stroke = this.darkMode ? '#4b5563' : '#e5e7eb';
+          mainShape.strokeWidth = 1;
+          mainShape.strokeDashArray = null;
+        }
+        node.cursor = 'pointer';
+        node.toolTip = null;
+      }
+    });
+  }
+
+  private createLockTooltip(lockInfo: EntityLock, isOwnLock: boolean): go.Adornment {
+    const tooltipText = isOwnLock
+      ? `🔓 You are editing this entity\nLocked at: ${new Date(lockInfo.lockedAt).toLocaleString()}`
+      : `🔒 Being edited by: ${lockInfo.userName}\nLocked at: ${new Date(lockInfo.lockedAt).toLocaleString()}`;
+
+    return $(go.Adornment, "Auto",
+      $(go.Shape, "RoundedRectangle",
+        {
+          fill: isOwnLock ? '#10b981' : '#dc2626',
+          stroke: null,
+          opacity: 0.9
+        }
+      ),
+      $(go.TextBlock, tooltipText,
+        {
+          font: "12px Inter, system-ui, sans-serif",
+          stroke: "white",
+          margin: 8,
+          maxSize: new go.Size(200, NaN),
+          wrap: go.TextBlock.WrapFit
+        }
+      )
+    );
   }
 
   private loadDiagramData(projectId: string): void {
@@ -195,6 +362,7 @@ export class DiagramComponent implements OnInit, OnDestroy {
         new go.Binding("location", "location").makeTwoWay(),
         $(go.Shape, "RoundedRectangle",
           {
+            name: "MAIN_SHAPE",
             fill: "white",
             stroke: "#e5e7eb",
             strokeWidth: 1,
@@ -218,10 +386,56 @@ export class DiagramComponent implements OnInit, OnDestroy {
             $(go.TextBlock,
               {
                 font: "600 16px Inter, system-ui, sans-serif",
-                margin: new go.Margin(8, 8, 8, 8),
+                margin: new go.Margin(8, 4, 8, 8),
               },
               new go.Binding("text", "key"),
               new go.Binding("stroke", "", () => this.darkMode ? "#f3f4f6" : "#1f2937")
+            ),
+            // Lock indicator with user info
+            $(go.Panel, "Horizontal",
+              {
+                name: "LOCK_INDICATOR",
+                margin: new go.Margin(8, 8, 8, 4),
+                background: "transparent"
+              },
+              new go.Binding("visible", "id", (entityId) => {
+                return this.lockedEntities.some(lock => lock.entityId === entityId);
+              }).ofObject(),
+              // Lock icon
+              $(go.TextBlock,
+                {
+                  font: "12px Inter, system-ui, sans-serif",
+                  margin: new go.Margin(0, 2, 0, 0)
+                },
+                new go.Binding("text", "id", (entityId) => {
+                  const isLockedByMe = this.collaborationService.isEntityLockedByCurrentUser(entityId);
+                  return isLockedByMe ? "🔓" : "🔒";
+                }).ofObject(),
+                new go.Binding("stroke", "id", (entityId) => {
+                  const isLockedByMe = this.collaborationService.isEntityLockedByCurrentUser(entityId);
+                  return isLockedByMe ? "#10b981" : "#dc2626";
+                }).ofObject()
+              ),
+              // User name
+              $(go.TextBlock,
+                {
+                  font: "10px Inter, system-ui, sans-serif",
+                  maxSize: new go.Size(80, NaN),
+                  overflow: go.TextBlock.OverflowEllipsis
+                },
+                new go.Binding("text", "id", (entityId) => {
+                  const lockInfo = this.lockedEntities.find(lock => lock.entityId === entityId);
+                  if (!lockInfo) return "";
+
+                  const isLockedByMe = this.collaborationService.isEntityLockedByCurrentUser(entityId);
+                  const userName = isLockedByMe ? "You" : this.getFirstName(lockInfo.userName);
+                  return userName;
+                }).ofObject(),
+                new go.Binding("stroke", "id", (entityId) => {
+                  const isLockedByMe = this.collaborationService.isEntityLockedByCurrentUser(entityId);
+                  return isLockedByMe ? "#10b981" : "#dc2626";
+                }).ofObject()
+              )
             )
           ),
 
@@ -332,6 +546,12 @@ export class DiagramComponent implements OnInit, OnDestroy {
   }
 
   addEntity(): void {
+    // Check if the user can edit the diagram
+    if (!this.canEdit) {
+      this.showPermissionDeniedMessage();
+      return;
+    }
+
     const newEntity: EntityModel = {
       id: crypto.randomUUID(),
       key: `table${this.entities.length + 1}`,
@@ -348,8 +568,39 @@ export class DiagramComponent implements OnInit, OnDestroy {
 
   // Entity editor
   showTableEditorModal(entity: any): void {
-    this.selectedEntity = entity;
-    this.openEntityEditorModal();
+    // Verificar se o usuário pode editar
+    if (!this.canEdit) {
+      this.showPermissionDeniedMessage();
+      return;
+    }
+
+    // Check if the entity is not being edited by another user
+    const conflict = this.collaborationService.checkEditConflict(entity.id);
+    if (!conflict.canEdit) {
+      const lockInfo = this.lockedEntities.find(lock => lock.entityId === entity.id);
+      let detailedMessage = conflict.message;
+
+      if (lockInfo) {
+        const lockTime = new Date(lockInfo.lockedAt).toLocaleString();
+        detailedMessage += `\n\n📊 Entity: ${entity.key}\n👤 Being edited by: ${lockInfo.userName}\n⏰ Locked since: ${lockTime}\n\n💡 You can see the lock indicator (🔒) on the entity. Try again later when it's unlocked.`;
+      }
+
+      alert(detailedMessage);
+      return;
+    }
+
+    // Try to lock the entity for editing
+    this.collaborationService.lockEntity(entity.id, this.projectId).subscribe({
+      next: (lock: EntityLock) => {
+        console.log('Entity locked successfully:', lock);
+        this.selectedEntity = entity;
+        this.openEntityEditorModal();
+      },
+      error: (error: any) => {
+        console.error('Error locking entity:', error);
+        this.handleLockFailure(entity);
+      }
+    });
   }
 
   handleSave(entity: any): void {
@@ -402,6 +653,12 @@ export class DiagramComponent implements OnInit, OnDestroy {
   }
 
   selectRelationshipType(type: '1:1' | '1:N' | 'N:N'): void {
+    // Check if the user can edit the diagram
+    if (!this.canEdit) {
+      this.showPermissionDeniedMessage();
+      return;
+    }
+
     this.selectedRelationshipType = type;
     this.selectedEntities = [];
   }
@@ -571,7 +828,20 @@ export class DiagramComponent implements OnInit, OnDestroy {
   }
 
   closeEntityEditorModal(): void {
+    // Unlock entity when closing modal
+    if (this.selectedEntity && this.selectedEntity.id) {
+      this.collaborationService.unlockEntity(this.selectedEntity.id, this.projectId).subscribe({
+        next: () => {
+          console.log('Entity unlocked successfully');
+        },
+        error: (error: any) => {
+          console.error('Error unlocking entity:', error);
+        }
+      });
+    }
+
     this.isEntityEditorModalOpen = false;
+    this.selectedEntity = {};
   }
 
   sendToServer(): void {
@@ -661,6 +931,103 @@ export class DiagramComponent implements OnInit, OnDestroy {
 
     // Reset file input
     input.value = '';
+  }
+
+  private showPermissionDeniedMessage(): void {
+    const roleMessage = this.userRole === 'VIEWER'
+      ? 'You have view-only access to this diagram. Contact the project owner for edit permissions.'
+      : 'You do not have permission to edit this diagram.';
+
+    alert(roleMessage);
+  }
+
+  // Helper methods for the template
+  getRoleIcon(): string {
+    switch (this.userRole) {
+      case 'OWNER': return 'bi-crown';
+      case 'EDITOR': return 'bi-pencil';
+      case 'VIEWER': return 'bi-eye';
+      default: return 'bi-person';
+    }
+  }
+
+  getUserRoleDisplay(): string {
+    switch (this.userRole) {
+      case 'OWNER': return 'Owner';
+      case 'EDITOR': return 'Editor';
+      case 'VIEWER': return 'Viewer';
+      default: return 'No Access';
+    }
+  }
+
+  getFirstName(fullName: string): string {
+    if (!fullName) return 'User';
+    const parts = fullName.split(' ');
+    return parts[0] || 'User';
+  }
+
+  getEntityName(entityId: string): string {
+    const entity = this.entities.find(e => e.id === entityId);
+    return entity?.key || 'Unknown Entity';
+  }
+
+  private refreshDiagramBindings(): void {
+    if (!this.diagram) return;
+
+    try {
+      // Force update of GoJS bindings
+      this.diagram.nodes.each((node: go.Node) => {
+        // Update lock indicator specific bindings
+        const lockIndicator = node.findObject('LOCK_INDICATOR');
+        if (lockIndicator) {
+          // Force update of bindings
+          node.updateTargetBindings();
+        }
+      });
+
+      // Invalidate the diagram to force re-render
+      this.diagram.invalidateDocumentBounds();
+    } catch (error) {
+      console.error('Error refreshing diagram bindings:', error);
+    }
+  }
+
+  private handleLockFailure(entity: any): void {
+    const message = `❌ Failed to lock entity for editing.\n\nThis might happen if:\n• Another user just started editing it\n• There are stale locks in the system\n• Network connection issues\n\nWould you like to try cleaning up stale locks and retry?`;
+
+    if (confirm(message)) {
+      // Try clearing orphaned locks and try again
+      this.collaborationService.forceCleanupStaleLocks().subscribe({
+        next: () => {
+          console.log('Stale locks cleaned up');
+          // Reload project locks
+          this.loadProjectLocks(this.projectId);
+
+          // Try again after a short delay
+          setTimeout(() => {
+            this.retryEntityLock(entity);
+          }, 500);
+        },
+        error: (error: any) => {
+          console.error('Error cleaning up stale locks:', error);
+          alert('❌ Failed to clean up stale locks. Please try again later or contact support.');
+        }
+      });
+    }
+  }
+
+  private retryEntityLock(entity: any): void {
+    this.collaborationService.lockEntity(entity.id, this.projectId).subscribe({
+      next: (lock: EntityLock) => {
+        console.log('Entity locked successfully on retry:', lock);
+        this.selectedEntity = entity;
+        this.openEntityEditorModal();
+      },
+      error: (error: any) => {
+        console.error('Error locking entity on retry:', error);
+        alert('❌ Still unable to lock entity for editing. Please try again later.');
+      }
+    });
   }
 
 }

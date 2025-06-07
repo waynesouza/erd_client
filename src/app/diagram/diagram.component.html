@@ -1,49 +1,97 @@
 <div class="diagram-container">
-  <div class="toolbar" *ngIf="projectId">
-    <div class="tool-group">
-      <button class="tool-button" type="button" (click)="addEntity()" title="Add Table">
-        <i class="bi bi-table"></i>
-      </button>
+  <!-- Status Bar -->
+  <div class="collaboration-status" *ngIf="projectId && currentProject">
+    <div class="user-role-indicator" [class]="'role-' + userRole.toLowerCase()">
+      <i class="bi" [class]="getRoleIcon()"></i>
+      <span>{{ getUserRoleDisplay() }}</span>
     </div>
-    <div class="tool-group">
-      <button class="tool-button" type="button" (click)="selectRelationshipType('1:1')" title="One to One Relationship">
-        <i class="bi bi-arrows-angle-contract"></i>
-      </button>
-      <button class="tool-button" type="button" (click)="selectRelationshipType('1:N')" title="One to Many Relationship">
-        <i class="bi bi-arrow-up-right"></i>
-      </button>
-      <button class="tool-button" type="button" (click)="selectRelationshipType('N:N')" title="Many to Many Relationship">
-        <i class="bi bi-arrows-angle-expand"></i>
-      </button>
+    
+    <div class="active-locks" *ngIf="lockedEntities.length > 0">
+      <i class="bi bi-lock"></i>
+      <span *ngIf="lockedEntities.length === 1; else multipleLocks">
+        {{ getEntityName(lockedEntities[0].entityId) }} being edited by {{ getFirstName(lockedEntities[0].userName) }}
+      </span>
+      <ng-template #multipleLocks>
+        <span>{{ lockedEntities.length }} entities being edited</span>
+      </ng-template>
     </div>
-    <div class="tool-group">
-      <button class="tool-button" type="button" (click)="sendToServer()" title="Save Diagram">
-        <i class="bi bi-check-circle"></i>
-      </button>
-    </div>
-    <div class="tool-group">
-      <button class="tool-button" type="button" (click)="exportDdl()" title="Export DDL">
-        <i class="bi bi-download"></i>
-      </button>
-      <button class="tool-button" type="button" (click)="importDdl()" title="Import DDL">
-        <i class="bi bi-upload"></i>
-      </button>
+    
+    <div class="project-info">
+      <i class="bi bi-diagram-2"></i>
+      <span>{{ currentProject.name }}</span>
     </div>
   </div>
-  <div class="diagram-area" [class.full-width]="!projectId">
-    <div id="myDiagramDiv" [class.dark-mode]="darkMode"></div>
-    <input 
-      #fileInput 
-      type="file" 
-      accept=".sql" 
-      style="display: none" 
-      (change)="onFileSelected($event)">
-    <app-entity-edit-form
-      *ngIf="isEntityEditorModalOpen"
-      [entity]="selectedEntity"
-      (entityUpdated)="handleSave($event)"
-      (entityRemoved)="handleRemove($event)"
-      (close)="closeEntityEditorModal()">
-    </app-entity-edit-form>
+
+  <!-- Container for toolbar and diagram area -->
+  <div class="toolbar-container" [class.no-project]="!projectId">
+    <!-- Toolbar with conditional visibility based on permissions -->
+    <div class="toolbar" *ngIf="projectId && canEdit">
+      <div class="tool-group">
+        <button class="tool-button" type="button" (click)="addEntity()" title="Add Table">
+          <i class="bi bi-table"></i>
+        </button>
+      </div>
+      <div class="tool-group">
+        <button class="tool-button" type="button" (click)="selectRelationshipType('1:1')" title="One to One Relationship">
+          <i class="bi bi-arrows-angle-contract"></i>
+        </button>
+        <button class="tool-button" type="button" (click)="selectRelationshipType('1:N')" title="One to Many Relationship">
+          <i class="bi bi-arrow-up-right"></i>
+        </button>
+        <button class="tool-button" type="button" (click)="selectRelationshipType('N:N')" title="Many to Many Relationship">
+          <i class="bi bi-arrows-angle-expand"></i>
+        </button>
+      </div>
+      <div class="tool-group">
+        <button class="tool-button" type="button" (click)="sendToServer()" title="Save Diagram">
+          <i class="bi bi-check-circle"></i>
+        </button>
+      </div>
+      <div class="tool-group">
+        <button class="tool-button" type="button" (click)="exportDdl()" title="Export DDL">
+          <i class="bi bi-download"></i>
+        </button>
+        <button class="tool-button" type="button" (click)="importDdl()" title="Import DDL" *ngIf="userRole !== 'VIEWER'">
+          <i class="bi bi-upload"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- View-only toolbar for VIEWER users -->
+    <div class="toolbar viewer-toolbar" *ngIf="projectId && !canEdit">
+      <div class="tool-group">
+        <button class="tool-button disabled" type="button" title="View Only Mode - Add Table (Disabled)">
+          <i class="bi bi-table"></i>
+        </button>
+      </div>
+      <div class="tool-group">
+        <div class="viewer-notice">
+          <i class="bi bi-eye"></i>
+          <span>View Only</span>
+        </div>
+      </div>
+      <div class="tool-group">
+        <button class="tool-button" type="button" (click)="exportDdl()" title="Export DDL">
+          <i class="bi bi-download"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="diagram-area" [class.full-width]="!projectId" [class.viewer-mode]="!canEdit">
+      <div id="myDiagramDiv" [class.dark-mode]="darkMode" [class.read-only]="!canEdit"></div>
+      <input 
+        #fileInput 
+        type="file" 
+        accept=".sql" 
+        style="display: none" 
+        (change)="onFileSelected($event)">
+      <app-entity-edit-form
+        *ngIf="isEntityEditorModalOpen"
+        [entity]="selectedEntity"
+        (entityUpdated)="handleSave($event)"
+        (entityRemoved)="handleRemove($event)"
+        (close)="closeEntityEditorModal()">
+      </app-entity-edit-form>
+    </div>
   </div>
 </div>
