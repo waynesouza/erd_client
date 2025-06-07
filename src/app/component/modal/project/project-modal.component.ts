@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { StorageService } from '../../../service/storage.service';
 import { ProjectService } from '../../../service/project.service';
 import { DiagramService } from '../../../service/diagram.service';
-import { Project, ProjectUser, CreateProjectDto, UpdateProjectDto } from '../../../model/project.model';
+import { CreateProjectDto, Project, ProjectUser, UpdateProjectDto } from '../../../model/project.model';
 
 @Component({
   selector: 'app-project-modal',
@@ -18,7 +18,7 @@ export class ProjectModalComponent implements OnInit {
   showAddMemberModal = false;
   newMemberEmail = '';
   newMemberRole: 'EDITOR' | 'VIEWER' = 'VIEWER';
-  
+
   // Edit Member Modal properties
   showEditMemberModal = false;
   editMemberEmail = '';
@@ -91,16 +91,7 @@ export class ProjectModalComponent implements OnInit {
       member => member.email === this.currentUser?.email
     );
 
-    const isOwnerResult = currentMember?.role === 'OWNER';
-    
-    // Debug log
-    console.log('isOwner debug:', {
-      currentUserEmail: this.currentUser.email,
-      currentMember: currentMember,
-      isOwner: isOwnerResult
-    });
-
-    return isOwnerResult;
+    return currentMember?.role === 'OWNER';
   }
 
   canManageMembers(): boolean {
@@ -121,24 +112,15 @@ export class ProjectModalComponent implements OnInit {
   }
 
   canChangeRole(member: ProjectUser): boolean {
-    // Só o OWNER pode alterar roles
+    // Only the OWNER can change roles
     if (!this.isOwner()) {
       return false;
     }
 
-    // Não pode alterar a própria role
+    // Cannot change own role
     if (!this.currentUser) {
       return false;
     }
-
-    // Debug logs
-    console.log('canChangeRole debug:', {
-      memberEmail: member.email,
-      currentUserEmail: this.currentUser.email,
-      memberId: member.id,
-      currentUserId: this.currentUser.id,
-      isOwner: this.isOwner()
-    });
 
     // Compare by email instead of ID to avoid type mismatch issues
     return member.email !== this.currentUser.email;
@@ -149,17 +131,15 @@ export class ProjectModalComponent implements OnInit {
       return false;
     }
 
-    // Não pode remover a si mesmo
+    // Cannot remove itself
     if (member.email === this.currentUser.email) {
       return false;
     }
 
-    // Não pode remover outro OWNER
-    if (member.role === 'OWNER') {
-      return false;
-    }
+    // Cannot remove another OWNER
+    return member.role !== 'OWNER';
 
-    return true;
+
   }
 
   removeMember(memberId: string): void {
@@ -205,7 +185,7 @@ export class ProjectModalComponent implements OnInit {
   }
 
   closeAddMemberModal(event: MouseEvent): void {
-    // Fecha o modal apenas se clicou no background (overlay)
+    // Close the modal only if you clicked on the background (overlay)
     if (event.target === event.currentTarget) {
       this.cancelAddMember();
     }
@@ -227,7 +207,7 @@ export class ProjectModalComponent implements OnInit {
   }
 
   closeEditMemberModal(event: MouseEvent): void {
-    // Fecha o modal apenas se clicou no background (overlay)
+    // Close the modal only if you clicked on the background (overlay)
     if (event.target === event.currentTarget) {
       this.cancelEditMember();
     }
@@ -453,7 +433,7 @@ export class ProjectModalComponent implements OnInit {
     this.showAddMemberModal = false;
     this.newMemberEmail = '';
     this.newMemberRole = 'VIEWER';
-    
+
     this.showEditMemberModal = false;
     this.editMemberEmail = '';
     this.editMemberRole = 'VIEWER';
