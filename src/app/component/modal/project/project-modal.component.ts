@@ -2,12 +2,12 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { StorageService } from '../../../service/storage.service';
 import { ProjectService } from '../../../service/project.service';
 import { DiagramService } from '../../../service/diagram.service';
-import { Project, ProjectUser, CreateProjectDto, UpdateProjectDto } from '../../../model/project.model';
+import { CreateProjectDto, Project, ProjectUser, UpdateProjectDto } from '../../../model/project.model';
 
 @Component({
   selector: 'app-project-modal',
   templateUrl: './project-modal.component.html',
-  styleUrls: ['./project-modal.component.css']
+  styleUrls: ['./project-modal.component.scss']
 })
 export class ProjectModalComponent implements OnInit {
   @Input() isEditMode: boolean = false;
@@ -18,6 +18,12 @@ export class ProjectModalComponent implements OnInit {
   showAddMemberModal = false;
   newMemberEmail = '';
   newMemberRole: 'EDITOR' | 'VIEWER' = 'VIEWER';
+
+  // Edit Member Modal properties
+  showEditMemberModal = false;
+  editMemberEmail = '';
+  editMemberRole: 'OWNER' | 'EDITOR' | 'VIEWER' = 'VIEWER';
+  memberBeingEdited: ProjectUser | null = null;
 
   newProject: CreateProjectDto = {
     name: '',
@@ -92,22 +98,48 @@ export class ProjectModalComponent implements OnInit {
     return this.isOwner();
   }
 
+  canManageProject(): boolean {
+    if (!this.currentUser || !this.projectToEdit) {
+      return false;
+    }
+
+    const currentMember = this.projectToEdit.usersDto.find(
+      member => member.email === this.currentUser?.email
+    );
+
+    // OWNER and EDITOR can manage project, VIEWER cannot
+    return currentMember?.role === 'OWNER' || currentMember?.role === 'EDITOR';
+  }
+
+  canChangeRole(member: ProjectUser): boolean {
+    // Only the OWNER can change roles
+    if (!this.isOwner()) {
+      return false;
+    }
+
+    // Cannot change own role
+    if (!this.currentUser) {
+      return false;
+    }
+
+    // Compare by email instead of ID to avoid type mismatch issues
+    return member.email !== this.currentUser.email;
+  }
+
   canRemoveMember(member: ProjectUser): boolean {
     if (!this.isOwner() || !this.currentUser) {
       return false;
     }
 
-    // Não pode remover a si mesmo
-    if (member.id === this.currentUser.id) {
+    // Cannot remove itself
+    if (member.email === this.currentUser.email) {
       return false;
     }
 
-    // Não pode remover outro OWNER
-    if (member.role === 'OWNER') {
-      return false;
-    }
+    // Cannot remove another OWNER
+    return member.role !== 'OWNER';
 
-    return true;
+
   }
 
   removeMember(memberId: string): void {
@@ -146,42 +178,178 @@ export class ProjectModalComponent implements OnInit {
     this.showAddMemberModal = true;
   }
 
+  cancelAddMember(): void {
+    this.showAddMemberModal = false;
+    this.newMemberEmail = '';
+    this.newMemberRole = 'VIEWER';
+  }
+
+  closeAddMemberModal(event: MouseEvent): void {
+    // Close the modal only if you clicked on the background (overlay)
+    if (event.target === event.currentTarget) {
+      this.cancelAddMember();
+    }
+  }
+
+  // Edit Member Modal methods
+  openEditMemberModal(member: ProjectUser): void {
+    this.memberBeingEdited = member;
+    this.editMemberEmail = member.email;
+    this.editMemberRole = member.role;
+    this.showEditMemberModal = true;
+  }
+
+  cancelEditMember(): void {
+    this.showEditMemberModal = false;
+    this.editMemberEmail = '';
+    this.editMemberRole = 'VIEWER';
+    this.memberBeingEdited = null;
+  }
+
+  closeEditMemberModal(event: MouseEvent): void {
+    // Close the modal only if you clicked on the background (overlay)
+    if (event.target === event.currentTarget) {
+      this.cancelEditMember();
+    }
+  }
+
   addMember(): void {
-    if (!this.newMemberEmail || !this.projectToEdit) {
+    if (!this.newMemberEmail.trim() || !this.projectToEdit) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.newMemberEmail)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+
+    // Check if member already exists
+    const existingMember = this.projectToEdit.usersDto.find(
+      member => member.email.toLowerCase() === this.newMemberEmail.toLowerCase()
+    );
+    if (existingMember) {
+      alert('This user is already a member of the project.');
       return;
     }
 
     const teamMember = {
       projectId: this.projectToEdit.id,
-      userEmail: this.newMemberEmail,
-      role: this.newMemberRole
+      userEmail: this.newMemberEmail.trim(),
+      roleProjectEnum: this.newMemberRole
     };
+
+    console.log('Adding team member:', teamMember);
 
     this.projectService.addTeamMember(teamMember).subscribe({
       next: (response: any) => {
+        console.log('Add member response:', response);
         if (this.projectToEdit && response.body) {
-          this.projectToEdit.usersDto.push(response.body);
+          // Convert backend response to frontend model
+          const newMember = {
+            id: response.body.id,
+            email: response.body.email,
+            firstName: response.body.firstName,
+            lastName: response.body.lastName,
+            role: response.body.role
+          };
+          this.projectToEdit.usersDto.push(newMember);
+          console.log('Member added successfully:', newMember);
         }
-        this.showAddMemberModal = false;
-        this.newMemberEmail = '';
-        this.newMemberRole = 'VIEWER';
+        this.cancelAddMember();
       },
       error: (error: any) => {
         console.error('Error adding member:', error);
-        alert('Failed to add member. Please check the email and try again.');
+        const errorMessage = error.error?.message || 'Failed to add member. Please check the email and try again.';
+        alert(errorMessage);
       }
     });
   }
 
-  updateMemberRole(member: ProjectUser, newRole: string): void {
+  updateMember(): void {
+    if (!this.editMemberEmail.trim() || !this.memberBeingEdited || !this.projectToEdit) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(this.editMemberEmail)) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+
+    // Check if email is being changed and if it already exists
+    if (this.editMemberEmail.toLowerCase() !== this.memberBeingEdited.email.toLowerCase()) {
+      const existingMember = this.projectToEdit.usersDto.find(
+        member => member.email.toLowerCase() === this.editMemberEmail.toLowerCase()
+      );
+      if (existingMember) {
+        alert('This email is already in use by another member.');
+        return;
+      }
+    }
+
+    console.log('Updating member:', {
+      originalMember: this.memberBeingEdited,
+      newEmail: this.editMemberEmail,
+      newRole: this.editMemberRole
+    });
+
+    // For now, we'll just update the role since email change is complex
+    // In a real scenario, email change would require backend API support
+    if (this.editMemberRole !== this.memberBeingEdited.role) {
+      const updateTeamMember = {
+        projectId: this.projectToEdit.id,
+        userId: this.memberBeingEdited.id,
+        role: this.editMemberRole
+      };
+
+      this.projectService.updateTeamMember(updateTeamMember).subscribe({
+        next: (response: any) => {
+          console.log('Update member response:', response);
+          if (this.projectToEdit && response.body && this.memberBeingEdited) {
+            const index = this.projectToEdit.usersDto.findIndex(m => m.id === this.memberBeingEdited!.id);
+            if (index !== -1) {
+              // Update the member in the list
+              this.projectToEdit.usersDto[index] = {
+                id: response.body.id,
+                email: response.body.email,
+                firstName: response.body.firstName,
+                lastName: response.body.lastName,
+                role: response.body.role
+              };
+              console.log('Member updated successfully');
+            }
+          }
+          this.cancelEditMember();
+        },
+        error: (error: any) => {
+          console.error('Error updating member:', error);
+          const errorMessage = error.error?.message || 'Failed to update member. Please try again.';
+          alert(errorMessage);
+        }
+      });
+    } else {
+      // No role change, just close the modal
+      this.cancelEditMember();
+    }
+  }
+
+  updateMemberRole(member: ProjectUser, newRole: 'OWNER' | 'EDITOR' | 'VIEWER'): void {
     if (!this.isOwner() || !this.projectToEdit) {
       return;
     }
 
     // Não pode mudar o papel de si mesmo
-    if (member.id === this.currentUser?.id) {
+    if (member.email === this.currentUser?.email) {
+      console.log('Cannot change own role');
       return;
     }
+
+    console.log('Updating member role:', { member, newRole });
 
     const updateTeamMember = {
       projectId: this.projectToEdit.id,
@@ -191,16 +359,28 @@ export class ProjectModalComponent implements OnInit {
 
     this.projectService.updateTeamMember(updateTeamMember).subscribe({
       next: (response: any) => {
+        console.log('Update role response:', response);
         if (this.projectToEdit && response.body) {
           const index = this.projectToEdit.usersDto.findIndex(m => m.id === member.id);
           if (index !== -1) {
-            this.projectToEdit.usersDto[index] = response.body;
+            // Convert backend response to frontend model
+            this.projectToEdit.usersDto[index] = {
+              id: response.body.id,
+              email: response.body.email,
+              firstName: response.body.firstName,
+              lastName: response.body.lastName,
+              role: response.body.role
+            };
+            console.log('Member role updated successfully');
           }
         }
       },
       error: (error: any) => {
         console.error('Error updating member role:', error);
-        alert('Failed to update member role. Please try again.');
+        const errorMessage = error.error?.message || 'Failed to update member role. Please try again.';
+        alert(errorMessage);
+        // Revert the role change in the UI by reloading data
+        window.location.reload();
       }
     });
   }
@@ -253,6 +433,11 @@ export class ProjectModalComponent implements OnInit {
     this.showAddMemberModal = false;
     this.newMemberEmail = '';
     this.newMemberRole = 'VIEWER';
+
+    this.showEditMemberModal = false;
+    this.editMemberEmail = '';
+    this.editMemberRole = 'VIEWER';
+    this.memberBeingEdited = null;
   }
 
   private createProject(): void {

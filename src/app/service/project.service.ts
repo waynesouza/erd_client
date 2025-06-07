@@ -36,12 +36,12 @@ export class ProjectService {
     return this.http.get<TeamMember[]>(`${BASE_URL}/${projectId}/members`);
   }
 
-  addTeamMember(teamMember: AddTeamMemberDto): Observable<void> {
-    return this.http.post<void>(`${BASE_URL}/team-member`, teamMember, httpOptions);
+  addTeamMember(teamMember: AddTeamMemberDto): Observable<any> {
+    return this.http.post<any>(`${BASE_URL}/team-member`, teamMember, { ...httpOptions, observe: 'response' });
   }
 
-  updateTeamMember(updateTeamMember: UpdateTeamMemberDto): Observable<void> {
-    return this.http.put<void>(`${BASE_URL}/team-member`, updateTeamMember, httpOptions);
+  updateTeamMember(updateTeamMember: UpdateTeamMemberDto): Observable<any> {
+    return this.http.put<any>(`${BASE_URL}/team-member`, updateTeamMember, { ...httpOptions, observe: 'response' });
   }
 
   removeTeamMember(memberId: string, projectId: string): Observable<void> {

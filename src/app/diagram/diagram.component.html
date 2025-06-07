@@ -1,5 +1,5 @@
 <div class="diagram-container">
-  <div class="toolbar">
+  <div class="toolbar" *ngIf="projectId">
     <div class="tool-group">
       <button class="tool-button" type="button" (click)="addEntity()" title="Add Table">
         <i class="bi bi-table"></i>
@@ -30,7 +30,7 @@
       </button>
     </div>
   </div>
-  <div class="diagram-area">
+  <div class="diagram-area" [class.full-width]="!projectId">
     <div id="myDiagramDiv" [class.dark-mode]="darkMode"></div>
     <input 
       #fileInput 

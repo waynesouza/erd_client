@@ -36,7 +36,7 @@
                   *ngIf="isOwner()"
                   (click)="openAddMemberModal()">
             <i class="bi bi-person-plus"></i>
-            Add Member
+            <span>Add Member</span>
           </button>
         </div>
 
@@ -62,16 +62,8 @@
                 </div>
               </td>
               <td>
-                <div class="role-selector" *ngIf="isOwner() && member.id !== currentUser?.id">
-                  <select [(ngModel)]="member.role"
-                          (change)="updateMemberRole(member, member.role)"
-                          [disabled]="!isOwner()">
-                    <option value="OWNER">Owner</option>
-                    <option value="EDITOR">Editor</option>
-                    <option value="VIEWER">Viewer</option>
-                  </select>
-                </div>
-                <span class="role-badge" *ngIf="!isOwner() || member.id === currentUser?.id"
+                <!-- Always show role badge -->
+                <span class="role-badge"
                       [ngClass]="{
                           'owner': member.role === 'OWNER',
                           'editor': member.role === 'EDITOR',
@@ -81,9 +73,19 @@
                   </span>
               </td>
               <td *ngIf="isOwner()">
-                <div class="member-actions" *ngIf="canRemoveMember(member)">
+                <div class="member-actions">
+                  <!-- Edit button for all members except current user -->
+                  <button type="button"
+                          class="btn-edit"
+                          *ngIf="canChangeRole(member)"
+                          (click)="openEditMemberModal(member)"
+                          title="Edit member">
+                    <i class="bi bi-pencil"></i>
+                  </button>
+                  <!-- Remove button for members that can be removed -->
                   <button type="button"
                           class="btn-remove"
+                          *ngIf="canRemoveMember(member)"
                           (click)="removeMember(member.id)"
                           title="Remove member">
                     <i class="bi bi-trash"></i>
@@ -96,50 +98,116 @@
         </div>
       </div>
 
-      <div class="add-member-modal" *ngIf="showAddMemberModal">
-        <div class="modal-content">
-          <h3>Add New Member</h3>
-          <div class="form-group">
-            <input type="email"
-                   class="form-control"
-                   [(ngModel)]="newMemberEmail"
-                   placeholder="Member Email"
-                   required>
-          </div>
-          <div class="form-group">
-            <select class="form-control" [(ngModel)]="newMemberRole">
-              <option value="EDITOR">Editor</option>
-              <option value="VIEWER">Viewer</option>
-            </select>
-          </div>
-          <div class="button-group">
-            <button type="button" class="btn-cancel" (click)="showAddMemberModal = false">
-              Cancel
-            </button>
-            <button type="button" class="btn-save" (click)="addMember()">
-              Add Member
-            </button>
-          </div>
-        </div>
-      </div>
+
 
       <div class="button-group">
         <button type="button"
                 class="btn-delete"
                 *ngIf="isOwner() && isEditMode"
                 (click)="deleteProject()">
-          Delete Project
+          <i class="bi bi-trash"></i>
+          <span>Delete Project</span>
         </button>
         <button type="button"
                 class="btn-cancel"
                 (click)="closeModal()">
-          Cancel
+          <i class="bi bi-x-circle"></i>
+          <span>Cancel</span>
         </button>
         <button type="submit"
-                class="btn-save">
-          {{ isEditMode ? 'Save Changes' : 'Create Project' }}
+                class="btn-save"
+                *ngIf="!isEditMode || canManageProject()">
+          <i class="bi bi-check-circle"></i>
+          <span>{{ isEditMode ? 'Save Changes' : 'Create Project' }}</span>
         </button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Add Member Modal -->
+<div class="add-member-modal" *ngIf="showAddMemberModal" (click)="closeAddMemberModal($event)">
+  <div class="add-member-modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Add New Member</h3>
+      <button type="button" class="btn-close" (click)="cancelAddMember()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="memberEmail">Member Email</label>
+        <input type="email"
+               id="memberEmail"
+               class="form-control"
+               [(ngModel)]="newMemberEmail"
+               placeholder="Enter member email"
+               required>
+      </div>
+      
+      <div class="form-group">
+        <label for="memberRole">Role</label>
+        <select id="memberRole" class="form-control" [(ngModel)]="newMemberRole">
+          <option value="EDITOR">Editor</option>
+          <option value="VIEWER">Viewer</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn-cancel" (click)="cancelAddMember()">
+        <i class="bi bi-x-circle"></i>
+        <span>Cancel</span>
+      </button>
+      <button type="button" class="btn-save" (click)="addMember()">
+        <i class="bi bi-person-plus"></i>
+        <span>Add Member</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Member Modal -->
+<div class="edit-member-modal" *ngIf="showEditMemberModal" (click)="closeEditMemberModal($event)">
+  <div class="edit-member-modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Edit Member</h3>
+      <button type="button" class="btn-close" (click)="cancelEditMember()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    
+    <div class="modal-body">
+      <div class="form-group">
+        <label for="editMemberEmail">Member Email</label>
+        <input type="email"
+               id="editMemberEmail"
+               class="form-control"
+               [(ngModel)]="editMemberEmail"
+               placeholder="Enter member email"
+               required>
+      </div>
+      
+      <div class="form-group">
+        <label for="editMemberRole">Role</label>
+        <select id="editMemberRole" class="form-control" [(ngModel)]="editMemberRole">
+          <option value="OWNER">Owner</option>
+          <option value="EDITOR">Editor</option>
+          <option value="VIEWER">Viewer</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="modal-footer">
+      <button type="button" class="btn-cancel" (click)="cancelEditMember()">
+        <i class="bi bi-x-circle"></i>
+        <span>Cancel</span>
+      </button>
+      <button type="button" class="btn-save" (click)="updateMember()">
+        <i class="bi bi-pencil"></i>
+        <span>Update Member</span>
+      </button>
+    </div>
   </div>
 </div>
