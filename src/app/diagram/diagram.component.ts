@@ -1,9 +1,7 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
 import * as go from 'gojs';
-// @ts-ignore
-import * as sockjs from 'sockjs-client';
-// @ts-ignore
-import * as stomp from 'stompjs';
+import { Client } from '@stomp/stompjs';
+import * as SockJS from 'sockjs-client';
 import { DiagramService } from '../service/diagram.service';
 import { DiagramModel } from '../model/diagram.model';
 import { EntityModel } from '../model/entity.model';
@@ -11,6 +9,7 @@ import { SharedService } from '../service/shared.service';
 import { IntermediaryEntityModel } from '../model/intermediary-entity.model';
 import { AttributeModel } from '../model/attribute.model';
 import { LinkDataModel } from '../model/link-data.model';
+import { DdlService } from '../service/ddl.service';
 
 const $ = go.GraphObject.make;
 
@@ -23,6 +22,7 @@ export class DiagramComponent implements OnInit, OnDestroy {
 
   @Input() entities: EntityModel[] = [];
   @Input() selectedProjectId: string = '';
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   relationships: any[] = [];
   locations: go.Point[] = [];
   darkMode: boolean = false;
@@ -36,20 +36,41 @@ export class DiagramComponent implements OnInit, OnDestroy {
   // @ts-ignore
   public diagram: go.Diagram = null;
 
-  private stompClient: any;
+  private stompClient!: Client;
 
-  constructor(private diagramService: DiagramService, private sharedService: SharedService) { }
+  constructor(
+    private diagramService: DiagramService,
+    private sharedService: SharedService,
+    private ddlService: DdlService
+  ) { }
 
   ngOnInit(): void {
-    const socket = new sockjs('http://localhost:8080/api/send');
-    this.stompClient = stomp.over(socket);
+    // Configuração do WebSocket usando @stomp/stompjs
+    this.stompClient = new Client({
+      webSocketFactory: () => new SockJS('http://localhost:8080/api/send'),
+      connectHeaders: {},
+      debug: (str) => {
+        console.log('STOMP Debug:', str);
+      },
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+    });
 
-    this.stompClient.connect({}, () => {
-      this.stompClient.subscribe('/topic/receive', (message: any) => {
+    this.stompClient.onConnect = (frame) => {
+      console.log('Connected: ' + frame);
+      this.stompClient.subscribe('/topic/receive', (message) => {
         console.log('Received message from server:', message);
         this.receiveMessageAndRemakeDiagram(message);
       });
-    });
+    };
+
+    this.stompClient.onStompError = (frame) => {
+      console.error('Broker reported error: ' + frame.headers['message']);
+      console.error('Additional details: ' + frame.body);
+    };
+
+    this.stompClient.activate();
 
     this.sharedService.currentProjectId.subscribe(projectId => {
       if (projectId) {
@@ -103,7 +124,7 @@ export class DiagramComponent implements OnInit, OnDestroy {
       this.diagram = null;
     }
     if (this.stompClient) {
-      this.stompClient.disconnect();
+      this.stompClient.deactivate().then();
     }
   }
 
@@ -562,10 +583,84 @@ export class DiagramComponent implements OnInit, OnDestroy {
     });
 
     if (this.stompClient && this.stompClient.connected) {
-      this.stompClient.send('/app/send', {}, message);
+      this.stompClient.publish({
+        destination: '/app/send',
+        body: message
+      });
     } else {
       console.log('Cannot send message, stompClient is not connected');
     }
+  }
+
+  exportDdl(): void {
+    if (!this.projectId) {
+      console.error('No project selected for export');
+      return;
+    }
+
+    this.ddlService.exportDdl(this.projectId).subscribe({
+      next: (response) => {
+        const filename = `${this.projectId}_diagram.sql`;
+        this.ddlService.downloadSqlFile(response.ddlContent, filename);
+        console.log('DDL exported successfully');
+      },
+      error: (error) => {
+        console.error('Error exporting DDL:', error);
+        alert('Error exporting DDL. Please try again.');
+      }
+    });
+  }
+
+  importDdl(): void {
+    if (!this.projectId) {
+      console.error('No project selected for import');
+      return;
+    }
+
+    // Trigger file input click
+    if (this.fileInput) {
+      this.fileInput.nativeElement.click();
+    }
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith('.sql')) {
+      alert('Please select a valid SQL file.');
+      return;
+    }
+
+    this.ddlService.readSqlFile(file).then((ddlContent) => {
+      const importRequest = {
+        projectId: this.projectId,
+        ddlContent: ddlContent
+      };
+
+      this.ddlService.importDdl(importRequest).subscribe({
+        next: () => {
+          console.log('DDL imported successfully');
+          alert('DDL imported successfully! Reloading diagram...');
+          // Reload the diagram data
+          this.loadDiagramData(this.projectId);
+        },
+        error: (error) => {
+          console.error('Error importing DDL:', error);
+          alert('Error importing DDL. Please check the file format and try again.');
+        }
+      });
+    }).catch((error) => {
+      console.error('Error reading file:', error);
+      alert('Error reading file. Please try again.');
+    });
+
+    // Reset file input
+    input.value = '';
   }
 
 }

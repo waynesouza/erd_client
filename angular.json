@@ -31,7 +31,7 @@
           },
           "configurations": {
             "production": {
-              "allowedCommonJsDependencies": ["stompjs", "sockjs-client"],
+              "allowedCommonJsDependencies": ["@stomp/stompjs", "sockjs-client"],
               "budgets": [
                 {
                   "type": "initial",
@@ -58,7 +58,8 @@
               "vendorChunk": true,
               "extractLicenses": false,
               "sourceMap": true,
-              "namedChunks": true
+              "namedChunks": true,
+              "allowedCommonJsDependencies": ["@stomp/stompjs", "sockjs-client"]
             }
           },
           "defaultConfiguration": "production"

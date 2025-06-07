@@ -32,7 +32,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
   isCollapsed: boolean = false;
 
   private subscription: Subscription = new Subscription();
-  protected user: AuthResponseModel;
+  protected user: AuthResponseModel | null = null;
   userData$: Observable<UserResponse>;
 
   constructor(
@@ -61,11 +61,23 @@ export class SideBarComponent implements OnInit, OnDestroy {
   }
 
   buildProjectList(): void {
+    if (!this.user?.email) return;
+
+    console.log('Side-bar: Starting to get projects for user email:', this.user.email);
+
+    // FIXME Fixed error messages
     this.subscription.add(
-      // @ts-ignore
-      this.projectService.getProjectsByUserEmail(this.user.email).subscribe((response: Project[]) => {
-        console.log('Projects:', response);
-        this.projects = response;
+      this.projectService.getProjectsByUserEmail(this.user.email).subscribe({
+        next: (response: Project[]) => {
+          console.log('Side-bar: Projects response:', response);
+          this.projects = response || [];
+        },
+        error: (error: any) => {
+          console.error('Side-bar: Error getting projects:', error);
+          console.error('Side-bar: Error status:', error.status);
+          console.error('Side-bar: Error message:', error.message);
+          this.projects = [];
+        }
       })
     );
   }
@@ -100,9 +112,8 @@ export class SideBarComponent implements OnInit, OnDestroy {
     return new Promise((resolve, reject) => {
       this.subscription.add(
         this.projectService.getProjectById(id).subscribe({
-          next: (response) => {
+          next: (response: Project) => {
             if (response) {
-              // @ts-ignore
               this.selectedProject = response;
             }
             resolve();
@@ -139,9 +150,8 @@ export class SideBarComponent implements OnInit, OnDestroy {
     if (!this.selectedProject || !this.user) {
       return false;
     }
-    // @ts-ignore
     return this.selectedProject?.usersDto.some(
-      member => member.email === this.user.email && member.role === 'OWNER'
+      member => member.email === this.user?.email && member.role === 'OWNER'
     );
   }
 
@@ -172,9 +182,8 @@ export class SideBarComponent implements OnInit, OnDestroy {
       return false;
     }
     console.log('Project:', project);
-    // @ts-ignore
     return project.usersDto.some(
-      member => member.email === this.user.email && member.role === 'OWNER'
+      member => member.email === this.user?.email && member.role === 'OWNER'
     );
   }
 
@@ -199,4 +208,5 @@ export class SideBarComponent implements OnInit, OnDestroy {
       });
     }
   }
+
 }

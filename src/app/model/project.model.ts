@@ -1,7 +1,9 @@
 export interface ProjectUser {
   id: string;
   email: string;
-  role: string;
+  firstName?: string;
+  lastName?: string;
+  role: 'OWNER' | 'EDITOR' | 'VIEWER';
 }
 
 export interface Project {

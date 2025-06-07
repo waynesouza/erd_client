@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, Subject, tap } from 'rxjs';
+import { Observable, BehaviorSubject, tap } from 'rxjs';
 import { RegisterModel } from '../model/register.model';
 import { LoginModel } from '../model/login.model';
+import { StorageService } from './storage.service';
 
 const BASE_URL = 'http://localhost:8080/api';
 const httpOptions = { headers: new HttpHeaders({'Content-Type': 'application/json'}) };
@@ -12,16 +13,26 @@ const httpOptions = { headers: new HttpHeaders({'Content-Type': 'application/jso
 })
 export class AuthService {
 
-  private loggedIn = new Subject<void>()
+  private loggedInSubject = new BehaviorSubject<boolean>(false);
+  public loggedIn$ = this.loggedInSubject.asObservable();
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient, private storageService: StorageService) {
+    // Initialize with current login status
+    this.loggedInSubject.next(this.storageService.isLoggedIn());
+  }
 
-  get isLoggedIn() {
-    return this.loggedIn.asObservable();
+  get isLoggedIn(): boolean {
+    return this.storageService.isLoggedIn();
+  }
+
+  setLoggedIn(status: boolean): void {
+    this.loggedInSubject.next(status);
   }
 
   login(login: LoginModel): Observable<any> {
-    return this.http.post<any>(`${BASE_URL}/auth/login`, login, httpOptions).pipe(tap(() => this.loggedIn.next()));
+    return this.http.post<any>(`${BASE_URL}/auth/login`, login, httpOptions).pipe(
+      tap(() => this.setLoggedIn(true))
+    );
   }
 
   register(register: RegisterModel): Observable<any> {
@@ -29,7 +40,12 @@ export class AuthService {
   }
 
   logout(): Observable<any> {
-    return this.http.post<any>(`${BASE_URL}/auth/logout`, {}, httpOptions);
+    return this.http.post<any>(`${BASE_URL}/auth/logout`, {}, httpOptions).pipe(
+      tap(() => {
+        this.storageService.clean();
+        this.setLoggedIn(false);
+      })
+    );
   }
 
   refreshToken(): Observable<any> {

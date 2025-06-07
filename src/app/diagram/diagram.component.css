@@ -92,6 +92,22 @@
   --node-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
 }
 
+/* DDL Buttons Styling */
+.tool-button[title="Export DDL"]:hover {
+  background: #10b981;
+  color: white;
+}
+
+.tool-button[title="Import DDL"]:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+/* Hidden file input */
+input[type="file"] {
+  display: none !important;
+}
+
 /* Entity Editor Modal */
 app-entity-edit-form {
   position: absolute;

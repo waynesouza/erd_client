@@ -52,3 +52,13 @@ import 'zone.js';  // Included with Angular CLI.
  * APPLICATION IMPORTS
  */
 (window as any).global = window;
+
+// Polyfills para stompjs no browser
+(window as any).process = {
+  env: { DEBUG: undefined },
+  version: '',
+  browser: true
+};
+
+// Mock do módulo websocket para stompjs
+(window as any).WebSocket = (window as any).WebSocket || (window as any).MozWebSocket;
