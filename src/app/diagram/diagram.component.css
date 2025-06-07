@@ -1,7 +1,87 @@
+/* Host component should take full height */
+:host {
+  display: block;
+  height: 100%;
+  width: 100%;
+}
+
 .diagram-container {
   display: flex;
-  height: 100vh;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
   background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  overflow: hidden;
+}
+
+/* Collaboration Status Bar */
+.collaboration-status {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  height: 45px;
+  min-height: 45px;
+  flex-shrink: 0;
+}
+
+.user-role-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.user-role-indicator.role-owner {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fbbf24;
+}
+
+.user-role-indicator.role-editor {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #60a5fa;
+}
+
+.user-role-indicator.role-viewer {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.active-locks {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #dc2626;
+  font-weight: 500;
+}
+
+.project-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Toolbar Container */
+.toolbar-container {
+  display: flex;
+  flex: 1;
+  height: calc(100% - 45px); /* Adjust for status bar height */
+  width: 100%;
+}
+
+.toolbar-container.no-project {
+  height: 100%; /* Full height when no project selected */
 }
 
 .toolbar {
@@ -11,6 +91,12 @@
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  border-right: 1px solid #e5e7eb;
+  height: 100%;
+}
+
+.viewer-toolbar {
+  background: #f9fafb;
   border-right: 1px solid #e5e7eb;
 }
 
@@ -41,42 +127,122 @@
   transition: all 0.2s ease;
 }
 
-.tool-button:hover {
+.tool-button:hover:not(.disabled) {
   background: #8b5cf6;
   color: white;
+}
+
+.tool-button.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: #f3f4f6;
 }
 
 .tool-button i {
   font-size: 1.2rem;
 }
 
-.diagram-area {
-  width: 100%;
-  height: 100vh;
-  min-height: 400px;
-  min-width: 100vw;
-  position: relative;
+.viewer-notice {
   display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  color: #6b7280;
+  font-size: 10px;
+  font-weight: 500;
+  text-align: center;
+}
+
+.viewer-notice i {
+  font-size: 16px;
+}
+
+.diagram-area {
+  flex: 1;
+  display: flex;
+  position: relative;
+  height: 100%;
 }
 
 .diagram-area.full-width {
   width: 100%;
-  min-width: 100vw;
+}
+
+.diagram-area.viewer-mode {
+  position: relative;
+}
+
+.diagram-area.viewer-mode::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.01);
+  pointer-events: none;
+  z-index: 1;
 }
 
 #myDiagramDiv {
   width: 100%;
   height: 100%;
-  min-width: 400px;
-  min-height: 400px;
+  min-width: 0;
+  min-height: 0;
   background: #fff;
   position: relative;
   display: block;
+  flex: 1;
+}
+
+/* Ensure GoJS canvas takes full space */
+#myDiagramDiv canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 
 #myDiagramDiv.dark-mode {
   background: #1f2937;
   color: #f3f4f6;
+}
+
+#myDiagramDiv.read-only {
+  cursor: default;
+}
+
+/* Lock indicators for entities */
+.entity-locked {
+  opacity: 0.7;
+  border: 3px dashed #dc2626 !important;
+  cursor: not-allowed !important;
+}
+
+.entity-locked-by-me {
+  border: 3px solid #10b981 !important;
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
+  cursor: pointer !important;
+}
+
+.entity-locked::before {
+  content: "🔒";
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: #dc2626;
+  color: white;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  z-index: 10;
+}
+
+.entity-locked-by-me::before {
+  content: "🔓";
+  background: #10b981;
 }
 
 /* GoJS Node Styling */
@@ -111,6 +277,33 @@
 /* Hidden file input */
 input[type="file"] {
   display: none !important;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .collaboration-status {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px;
+  }
+  
+  .collaboration-status > div {
+    font-size: 12px;
+  }
+  
+  .toolbar {
+    width: 50px;
+    padding: 0.5rem 0.25rem;
+  }
+  
+  .tool-button {
+    width: 32px;
+    height: 32px;
+  }
+  
+  .tool-button i {
+    font-size: 1rem;
+  }
 }
 
 /* Entity Editor Modal */

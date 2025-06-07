@@ -2,7 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { StorageService } from '../../../service/storage.service';
 import { ProjectService } from '../../../service/project.service';
 import { DiagramService } from '../../../service/diagram.service';
-import { CreateProjectDto, Project, ProjectUser, UpdateProjectDto } from '../../../model/project.model';
+import { Project, ProjectUser, CreateProjectDto, UpdateProjectDto } from '../../../model/project.model';
 
 @Component({
   selector: 'app-project-modal',
@@ -138,8 +138,6 @@ export class ProjectModalComponent implements OnInit {
 
     // Cannot remove another OWNER
     return member.role !== 'OWNER';
-
-
   }
 
   removeMember(memberId: string): void {
