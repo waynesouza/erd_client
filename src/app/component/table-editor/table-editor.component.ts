@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { EntityModel } from '../../model/entity.model';
 import { AttributeModel } from '../../model/attribute.model';
 import { DataType } from '../../model/enum/datatype.enum';
@@ -8,21 +8,26 @@ import { DataType } from '../../model/enum/datatype.enum';
   templateUrl: './table-editor.component.html',
   styleUrls: ['./table-editor.component.css']
 })
-export class TableEditorComponent {
+export class TableEditorComponent implements OnInit {
+  // @ts-ignore
   @Input() entity: EntityModel;
   @Output() onSave: EventEmitter<EntityModel> = new EventEmitter<EntityModel>();
   @Output() onClose: EventEmitter<void> = new EventEmitter<void>();
 
   dataTypes: DataType[] = Object.values(DataType);
 
-  constructor() {
-    this.entity = {
-      id: '',
-      key: '',
-      items: [],
-      // @ts-ignore
-      location: { x: 0, y: 0 }
-    };
+  constructor() { }
+
+  ngOnInit(): void {
+    if (!this.entity) {
+      this.entity = {
+        id: '',
+        key: '',
+        items: [],
+        // @ts-ignore
+        location: {x: 0, y: 0}
+      };
+    }
   }
 
   addColumn(): void {

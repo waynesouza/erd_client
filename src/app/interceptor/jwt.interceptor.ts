@@ -43,7 +43,6 @@ export class JwtInterceptor implements HttpInterceptor {
   }
 
   private handleUnauthorized(request: HttpRequest<any>, next: HttpHandler) {
-    console.log(1);
     if (!this.isRefreshing) {
       this.isRefreshing = true;
 
