@@ -24,6 +24,8 @@ export class LoginComponent implements OnInit {
   ngOnInit(): void {
     if (this.storageService.isLoggedIn()) {
       this.isLoggedIn = true;
+      // If already logged in, redirect to diagram
+      this.router.navigate(['/diagram']).then();
     }
   }
 

@@ -21,9 +21,23 @@
         <i class="bi bi-check-circle"></i>
       </button>
     </div>
+    <div class="tool-group">
+      <button class="tool-button" type="button" (click)="exportDdl()" title="Export DDL">
+        <i class="bi bi-download"></i>
+      </button>
+      <button class="tool-button" type="button" (click)="importDdl()" title="Import DDL">
+        <i class="bi bi-upload"></i>
+      </button>
+    </div>
   </div>
   <div class="diagram-area">
     <div id="myDiagramDiv" [class.dark-mode]="darkMode"></div>
+    <input 
+      #fileInput 
+      type="file" 
+      accept=".sql" 
+      style="display: none" 
+      (change)="onFileSelected($event)">
     <app-entity-edit-form
       *ngIf="isEntityEditorModalOpen"
       [entity]="selectedEntity"

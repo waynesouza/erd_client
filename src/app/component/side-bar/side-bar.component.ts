@@ -6,20 +6,12 @@ import { StorageService } from '../../service/storage.service';
 import { SharedService } from '../../service/shared.service';
 import { Subscription, Observable } from 'rxjs';
 import { AuthResponseModel } from "../../model/auth-response.model";
+import { Project } from "../../model/project.model";
 
 interface UserResponse {
   name: string;
   email: string;
   avatar?: string;
-}
-
-interface Project {
-  id: string;
-  name: string;
-  description?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-  // Add other project properties as needed
 }
 
 @Component({
@@ -40,7 +32,7 @@ export class SideBarComponent implements OnInit, OnDestroy {
   isCollapsed: boolean = false;
 
   private subscription: Subscription = new Subscription();
-  protected user: AuthResponseModel;
+  protected user: AuthResponseModel | null = null;
   userData$: Observable<UserResponse>;
 
   constructor(
@@ -69,10 +61,23 @@ export class SideBarComponent implements OnInit, OnDestroy {
   }
 
   buildProjectList(): void {
+    if (!this.user?.email) return;
+
+    console.log('Side-bar: Starting to get projects for user email:', this.user.email);
+
+    // FIXME Fixed error messages
     this.subscription.add(
-      // @ts-ignore
-      this.projectService.getProjectsByUserEmail(this.user.email).subscribe((response: Project[]) => {
-        this.projects = response;
+      this.projectService.getProjectsByUserEmail(this.user.email).subscribe({
+        next: (response: Project[]) => {
+          console.log('Side-bar: Projects response:', response);
+          this.projects = response || [];
+        },
+        error: (error: any) => {
+          console.error('Side-bar: Error getting projects:', error);
+          console.error('Side-bar: Error status:', error.status);
+          console.error('Side-bar: Error message:', error.message);
+          this.projects = [];
+        }
       })
     );
   }
@@ -87,10 +92,10 @@ export class SideBarComponent implements OnInit, OnDestroy {
     this.isModalOpen = true;
   }
 
-  openEditModal(project: Project, event: MouseEvent): void {
+  async openEditModal(project: Project, event: MouseEvent): Promise<void> {
     event.stopPropagation();
     this.isEditMode = true;
-    this.getProjectDataById(project.id);
+    await this.getProjectDataById(project.id);
     this.isModalOpen = true;
   }
 
@@ -103,14 +108,23 @@ export class SideBarComponent implements OnInit, OnDestroy {
     this.hoveredProjectId = projectId;
   }
 
-  getProjectDataById(id: string): void {
-    this.subscription.add(
-      this.projectService.getProjectById(id).subscribe(response => {
-        if (response.body) {
-          this.selectedProject = response.body as Project;
-        }
-      })
-    );
+  async getProjectDataById(id: string): Promise<void> {
+    return new Promise((resolve, reject) => {
+      this.subscription.add(
+        this.projectService.getProjectById(id).subscribe({
+          next: (response: Project) => {
+            if (response) {
+              this.selectedProject = response;
+            }
+            resolve();
+          },
+          error: (err) => {
+            console.error('Erro ao buscar dados do projeto:', err);
+            reject(err);
+          }
+        })
+      );
+    });
   }
 
   ngOnDestroy(): void {
@@ -131,4 +145,68 @@ export class SideBarComponent implements OnInit, OnDestroy {
       void this.router.navigate(['/login']);
     }
   }
+
+  isOwnerOfSelectedProject(): boolean {
+    if (!this.selectedProject || !this.user) {
+      return false;
+    }
+    return this.selectedProject?.usersDto.some(
+      member => member.email === this.user?.email && member.role === 'OWNER'
+    );
+  }
+
+  deleteSelectedProject(): void {
+    if (!this.selectedProject) {
+      return;
+    }
+    if (!this.isOwnerOfSelectedProject()) {
+      alert('Only the project owner can delete this project.');
+      return;
+    }
+    if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+      this.projectService.deleteProject(this.selectedProject.id).subscribe({
+        next: () => {
+          this.selectedProject = null;
+          this.buildProjectList();
+        },
+        error: (error: any) => {
+          console.error('Error deleting project:', error);
+          alert('Failed to delete project. Please try again.');
+        }
+      });
+    }
+  }
+
+  isOwnerOfProject(project: Project): boolean {
+    if (!project || !this.user) {
+      return false;
+    }
+    console.log('Project:', project);
+    return project.usersDto.some(
+      member => member.email === this.user?.email && member.role === 'OWNER'
+    );
+  }
+
+  deleteProject(project: Project, event: MouseEvent): void {
+    event.stopPropagation();
+    if (!this.isOwnerOfProject(project)) {
+      alert('Only the project owner can delete this project.');
+      return;
+    }
+    if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+      this.projectService.deleteProject(project.id).subscribe({
+        next: () => {
+          if (this.selectedProject && this.selectedProject.id === project.id) {
+            this.selectedProject = null;
+          }
+          this.buildProjectList();
+        },
+        error: (error: any) => {
+          console.error('Error deleting project:', error);
+          alert('Failed to delete project. Please try again.');
+        }
+      });
+    }
+  }
+
 }

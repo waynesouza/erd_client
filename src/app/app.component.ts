@@ -20,10 +20,18 @@ export class AppComponent {
               private eventBusService: EventBusService, private router: Router) { }
 
   ngOnInit(): void {
-    this.isLoggedIn = this.storageService.isLoggedIn();
+    // Subscribe to auth state changes
+    this.authService.loggedIn$.subscribe(isLoggedIn => {
+      this.isLoggedIn = isLoggedIn;
+    });
 
     this.eventBusSub = this.eventBusService.on('logout', () => {
       this.logout();
+    });
+
+    // Handle access denied events
+    this.eventBusService.on('access-denied', () => {
+      console.warn('Access denied to resource');
     });
   }
 

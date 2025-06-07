@@ -51,16 +51,22 @@
 }
 
 .diagram-area {
-  flex: 1;
+  width: 100%;
+  height: 100vh;
+  min-height: 400px;
+  min-width: 100vw;
   position: relative;
-  overflow: hidden;
+  display: flex;
 }
 
 #myDiagramDiv {
   width: 100%;
   height: 100%;
-  background: #ffffff;
-  border: none;
+  min-width: 400px;
+  min-height: 400px;
+  background: #fff;
+  position: relative;
+  display: block;
 }
 
 #myDiagramDiv.dark-mode {
@@ -84,6 +90,22 @@
   --node-header-bg: #1f2937;
   --node-text-color: #f3f4f6;
   --node-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* DDL Buttons Styling */
+.tool-button[title="Export DDL"]:hover {
+  background: #10b981;
+  color: white;
+}
+
+.tool-button[title="Import DDL"]:hover {
+  background: #3b82f6;
+  color: white;
+}
+
+/* Hidden file input */
+input[type="file"] {
+  display: none !important;
 }
 
 /* Entity Editor Modal */

@@ -1,9 +1,7 @@
-import { Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
 import * as go from 'gojs';
-// @ts-ignore
-import * as sockjs from 'sockjs-client';
-// @ts-ignore
-import * as stomp from 'stompjs';
+import { Client } from '@stomp/stompjs';
+import * as SockJS from 'sockjs-client';
 import { DiagramService } from '../service/diagram.service';
 import { DiagramModel } from '../model/diagram.model';
 import { EntityModel } from '../model/entity.model';
@@ -11,6 +9,7 @@ import { SharedService } from '../service/shared.service';
 import { IntermediaryEntityModel } from '../model/intermediary-entity.model';
 import { AttributeModel } from '../model/attribute.model';
 import { LinkDataModel } from '../model/link-data.model';
+import { DdlService } from '../service/ddl.service';
 
 const $ = go.GraphObject.make;
 
@@ -19,10 +18,11 @@ const $ = go.GraphObject.make;
   templateUrl: './diagram.component.html',
   styleUrls: ['./diagram.component.css']
 })
-export class DiagramComponent implements OnInit {
+export class DiagramComponent implements OnInit, OnDestroy {
 
   @Input() entities: EntityModel[] = [];
   @Input() selectedProjectId: string = '';
+  @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
   relationships: any[] = [];
   locations: go.Point[] = [];
   darkMode: boolean = false;
@@ -36,42 +36,105 @@ export class DiagramComponent implements OnInit {
   // @ts-ignore
   public diagram: go.Diagram = null;
 
-  private stompClient: any;
+  private stompClient!: Client;
 
-  constructor(private diagramService: DiagramService, private sharedService: SharedService) { }
+  constructor(
+    private diagramService: DiagramService,
+    private sharedService: SharedService,
+    private ddlService: DdlService
+  ) { }
 
   ngOnInit(): void {
-    const socket = new sockjs('http://localhost:8080/api/send');
-    this.stompClient = stomp.over(socket);
+    // Configuração do WebSocket usando @stomp/stompjs
+    this.stompClient = new Client({
+      webSocketFactory: () => new SockJS('http://localhost:8080/api/send'),
+      connectHeaders: {},
+      debug: (str) => {
+        console.log('STOMP Debug:', str);
+      },
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
+    });
 
-    this.stompClient.connect({}, () => {
-      this.stompClient.subscribe('/topic/receive', (message: any) => {
+    this.stompClient.onConnect = (frame) => {
+      console.log('Connected: ' + frame);
+      this.stompClient.subscribe('/topic/receive', (message) => {
         console.log('Received message from server:', message);
         this.receiveMessageAndRemakeDiagram(message);
       });
-    });
+    };
+
+    this.stompClient.onStompError = (frame) => {
+      console.error('Broker reported error: ' + frame.headers['message']);
+      console.error('Additional details: ' + frame.body);
+    };
+
+    this.stompClient.activate();
 
     this.sharedService.currentProjectId.subscribe(projectId => {
       if (projectId) {
         this.projectId = projectId;
-        this.diagramService.getDiagram(projectId).subscribe({
-          next: (diagramData: DiagramModel) => {
-            this.locations = diagramData.nodeDataArray.map((entity: EntityModel) => {
-              return new go.Point(Number(entity.location.x), Number(entity.location.y));
-            });
-            this.entities = diagramData.nodeDataArray;
-            this.relationships = diagramData.linkDataArray;
-            this.initializeDiagram();
-            this.remakeDiagram();
-          }, error: () => {
-            this.initializeDiagram();
-          }
-        });
+        this.loadDiagramData(projectId);
       }
     });
   }
 
+  private loadDiagramData(projectId: string): void {
+    this.diagramService.getDiagram(projectId).subscribe({
+      next: (diagramData: DiagramModel) => {
+        console.log('Received diagram data:', diagramData);
+        if (diagramData && diagramData.nodeDataArray) {
+          this.locations = diagramData.nodeDataArray.map((entity: EntityModel) => {
+            return new go.Point(Number(entity.location?.x || 0), Number(entity.location?.y || 0));
+          });
+          this.entities = diagramData.nodeDataArray;
+          this.relationships = diagramData.linkDataArray || [];
+          this.setupDiagram();
+        } else {
+          console.error('Invalid diagram data received:', diagramData);
+          this.setupEmptyDiagram();
+        }
+      },
+      error: (error) => {
+        console.error('Error loading diagram:', error);
+        this.setupEmptyDiagram();
+      }
+    });
+  }
+
+  private setupDiagram(): void {
+    this.initializeDiagram();
+    if (this.entities.length > 0 || this.relationships.length > 0) {
+      this.remakeDiagram();
+    }
+  }
+
+  private setupEmptyDiagram(): void {
+    this.entities = [];
+    this.relationships = [];
+    this.locations = [];
+    this.initializeDiagram();
+  }
+
+  ngOnDestroy(): void {
+    if (this.diagram) {
+      this.diagram.div = null;
+      // @ts-ignore
+      this.diagram = null;
+    }
+    if (this.stompClient) {
+      this.stompClient.deactivate().then();
+    }
+  }
+
   private initializeDiagram(): void {
+    if (this.diagram) {
+      this.diagram.div = null;
+      // @ts-ignore
+      this.diagram = null;
+    }
+
     this.diagram = $(go.Diagram, 'myDiagramDiv', {
       initialContentAlignment: go.Spot.Center,
       "animationManager.isEnabled": false,
@@ -469,13 +532,26 @@ export class DiagramComponent implements OnInit {
   }
 
   remakeDiagram(): void {
-    this.entities.forEach((entity: EntityModel, index: number): void => {
-      entity.location = this.locations[index];
-    });
-    this.diagram.model = new go.GraphLinksModel({
-      nodeDataArray: this.entities,
-      linkDataArray: this.relationships
-    });
+    if (!this.diagram) {
+      this.initializeDiagram();
+    }
+
+    try {
+      this.entities.forEach((entity: EntityModel, index: number): void => {
+        if (this.locations[index]) {
+          entity.location = this.locations[index];
+        } else {
+          entity.location = new go.Point(Math.random() * 400, Math.random() * 400);
+        }
+      });
+
+      this.diagram.model = new go.GraphLinksModel({
+        nodeDataArray: this.entities,
+        linkDataArray: this.relationships
+      });
+    } catch (error) {
+      console.error('Error remaking diagram:', error);
+    }
   }
 
   receiveMessageAndRemakeDiagram(message: any): void {
@@ -507,10 +583,84 @@ export class DiagramComponent implements OnInit {
     });
 
     if (this.stompClient && this.stompClient.connected) {
-      this.stompClient.send('/app/send', {}, message);
+      this.stompClient.publish({
+        destination: '/app/send',
+        body: message
+      });
     } else {
       console.log('Cannot send message, stompClient is not connected');
     }
+  }
+
+  exportDdl(): void {
+    if (!this.projectId) {
+      console.error('No project selected for export');
+      return;
+    }
+
+    this.ddlService.exportDdl(this.projectId).subscribe({
+      next: (response) => {
+        const filename = `${this.projectId}_diagram.sql`;
+        this.ddlService.downloadSqlFile(response.ddlContent, filename);
+        console.log('DDL exported successfully');
+      },
+      error: (error) => {
+        console.error('Error exporting DDL:', error);
+        alert('Error exporting DDL. Please try again.');
+      }
+    });
+  }
+
+  importDdl(): void {
+    if (!this.projectId) {
+      console.error('No project selected for import');
+      return;
+    }
+
+    // Trigger file input click
+    if (this.fileInput) {
+      this.fileInput.nativeElement.click();
+    }
+  }
+
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.name.toLowerCase().endsWith('.sql')) {
+      alert('Please select a valid SQL file.');
+      return;
+    }
+
+    this.ddlService.readSqlFile(file).then((ddlContent) => {
+      const importRequest = {
+        projectId: this.projectId,
+        ddlContent: ddlContent
+      };
+
+      this.ddlService.importDdl(importRequest).subscribe({
+        next: () => {
+          console.log('DDL imported successfully');
+          alert('DDL imported successfully! Reloading diagram...');
+          // Reload the diagram data
+          this.loadDiagramData(this.projectId);
+        },
+        error: (error) => {
+          console.error('Error importing DDL:', error);
+          alert('Error importing DDL. Please check the file format and try again.');
+        }
+      });
+    }).catch((error) => {
+      console.error('Error reading file:', error);
+      alert('Error reading file. Please try again.');
+    });
+
+    // Reset file input
+    input.value = '';
   }
 
 }
