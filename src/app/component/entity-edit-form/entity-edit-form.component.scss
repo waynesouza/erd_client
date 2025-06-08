@@ -291,6 +291,59 @@ $primary-color: #3b82f6;
   }
 }
 
+// Validation styles
+.validation-indicator {
+  margin-left: 8px;
+  
+  &.valid i {
+    color: $success-color;
+  }
+  
+  &.invalid i {
+    color: $danger-color;
+  }
+}
+
+.has-error {
+  background-color: rgba($danger-color, 0.05);
+  
+  .form-control {
+    border-color: $danger-color;
+  }
+}
+
+.text-danger {
+  color: $danger-color;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+
+
+.is-valid {
+  border-color: $success-color;
+  
+  &:focus {
+    border-color: $success-color;
+    box-shadow: 0 0 0 3px rgba($success-color, 0.1);
+  }
+}
+
+.is-invalid {
+  border-color: $danger-color;
+  
+  &:focus {
+    border-color: $danger-color;
+    box-shadow: 0 0 0 3px rgba($danger-color, 0.1);
+  }
+}
+
+.invalid-feedback {
+  color: $danger-color;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
 // Responsive design
 @media (max-width: 768px) {
   .modal-dialog {

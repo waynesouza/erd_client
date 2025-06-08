@@ -55,15 +55,18 @@
           <i class="bi bi-upload"></i>
         </button>
       </div>
+      <div class="tool-group">
+        <button class="tool-button validation-button" type="button" (click)="showValidationReport()" title="Validate Diagram">
+          <i class="bi bi-shield-check"></i>
+        </button>
+        <button class="tool-button legend-button" type="button" (click)="showLegend = !showLegend" title="Toggle Legend">
+          <i class="bi bi-info-circle"></i>
+        </button>
+      </div>
     </div>
 
     <!-- View-only toolbar for VIEWER users -->
     <div class="toolbar viewer-toolbar" *ngIf="projectId && !canEdit">
-      <div class="tool-group">
-        <button class="tool-button disabled" type="button" title="View Only Mode - Add Table (Disabled)">
-          <i class="bi bi-table"></i>
-        </button>
-      </div>
       <div class="tool-group">
         <div class="viewer-notice">
           <i class="bi bi-eye"></i>
@@ -74,11 +77,42 @@
         <button class="tool-button" type="button" (click)="exportDdl()" title="Export DDL">
           <i class="bi bi-download"></i>
         </button>
+        <button class="tool-button validation-button" type="button" (click)="showValidationReport()" title="Validate Diagram">
+          <i class="bi bi-shield-check"></i>
+        </button>
+        <button class="tool-button legend-button" type="button" (click)="showLegend = !showLegend" title="Toggle Legend">
+          <i class="bi bi-info-circle"></i>
+        </button>
       </div>
     </div>
 
     <div class="diagram-area" [class.full-width]="!projectId" [class.viewer-mode]="!canEdit">
       <div id="myDiagramDiv" [class.dark-mode]="darkMode" [class.read-only]="!canEdit"></div>
+      
+      <!-- Legenda de ícones -->
+      <div class="icon-legend" *ngIf="projectId && entities.length > 0 && showLegend">
+        <h6>📋 Legend</h6>
+        <div class="legend-grid">
+          <div class="legend-section">
+            <div class="legend-title">Data Types</div>
+            <div class="legend-item"><span>🔢</span> Numbers</div>
+            <div class="legend-item"><span>💰</span> Decimals</div>
+            <div class="legend-item"><span>📝</span> Text</div>
+            <div class="legend-item"><span>☑️</span> Boolean</div>
+            <div class="legend-item"><span>📅</span> Date</div>
+            <div class="legend-item"><span>🗓️</span> DateTime</div>
+            <div class="legend-item"><span>⏰</span> Timestamp</div>
+          </div>
+          <div class="legend-section">
+            <div class="legend-title">Properties</div>
+            <div class="legend-item"><span class="shape diamond"></span> Primary Key</div>
+            <div class="legend-item"><span class="shape triangle"></span> Foreign Key</div>
+            <div class="legend-item"><span class="shape pentagon"></span> Unique</div>
+            <div class="legend-item"><span class="shape circle"></span> Normal</div>
+          </div>
+        </div>
+      </div>
+      
       <input 
         #fileInput 
         type="file" 

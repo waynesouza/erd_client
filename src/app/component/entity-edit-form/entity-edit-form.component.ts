@@ -3,6 +3,7 @@ import { EntityModel } from '../../model/entity.model';
 import { Point } from 'gojs';
 import { DataType } from "../../model/enum/datatype.enum";
 import { AttributeModel } from '../../model/attribute.model';
+import { SqlValidationService, ValidationResult } from '../../service/sql-validation.service';
 
 @Component({
   selector: 'app-entity-edit-form',
@@ -21,6 +22,8 @@ export class EntityEditFormComponent {
   @Output() entityRemoved: EventEmitter<string> = new EventEmitter<string>();
   @Output() close: EventEmitter<void> = new EventEmitter<void>();
   dataTypes: DataType[] = Object.values(DataType);
+  
+  constructor(private sqlValidationService: SqlValidationService) {}
 
   addAttribute(): void {
     const newAttribute: AttributeModel = {
@@ -51,32 +54,22 @@ export class EntityEditFormComponent {
   }
 
   private validateEntity(): boolean {
-    if (!this.entity.key || this.entity.key.trim() === '') {
-      alert('Please enter an entity name.');
-      return false;
-    }
-
-    // Check for duplicate attribute names
-    const attributeNames = this.entity.items.map(item => item.name.toLowerCase());
-    const duplicates = attributeNames.filter((name, index) => attributeNames.indexOf(name) !== index);
+    // Usar o serviço de validação SQL completo
+    const validationResult: ValidationResult = this.sqlValidationService.validateEntity(this.entity);
     
-    if (duplicates.length > 0) {
-      alert('Duplicate attribute names are not allowed.');
+    if (!validationResult.isValid) {
+      // Mostrar erros em um alert formatado
+      const message = this.sqlValidationService.formatValidationMessages(validationResult);
+      alert(message);
       return false;
     }
 
-    // Check for empty attribute names
-    const emptyNames = this.entity.items.some(item => !item.name || item.name.trim() === '');
-    if (emptyNames) {
-      alert('All attributes must have a name.');
-      return false;
-    }
-
-    // Check for missing types
-    const missingTypes = this.entity.items.some(item => !item.type);
-    if (missingTypes) {
-      alert('All attributes must have a type.');
-      return false;
+    // Mostrar warnings se existirem (mas permitir continuar)
+    if (validationResult.warnings.length > 0) {
+      const warningMessage = `⚠️ WARNINGS:\n${validationResult.warnings.join('\n')}\n\nDo you want to continue anyway?`;
+      if (!confirm(warningMessage)) {
+        return false;
+      }
     }
 
     return true;
@@ -84,6 +77,118 @@ export class EntityEditFormComponent {
 
   closeModal(): void {
     this.close.emit();
+  }
+
+  // Validação automática quando o usuário seleciona Primary Key
+  onPrimaryKeyChange(attribute: AttributeModel): void {
+    if (attribute.pk) {
+      // Desmarcar outras PKs (apenas uma PK permitida)
+      this.entity.items.forEach(attr => {
+        if (attr !== attribute) {
+          attr.pk = false;
+        }
+      });
+      
+      // PK deve ser NOT NULL
+      attribute.nullable = false;
+    }
+  }
+
+  // Validação automática quando o usuário seleciona AUTO_INCREMENT
+  onAutoIncrementChange(attribute: AttributeModel): void {
+    if (attribute.autoIncrement) {
+      // Desmarcar outros AUTO_INCREMENT (apenas um permitido)
+      this.entity.items.forEach(attr => {
+        if (attr !== attribute) {
+          attr.autoIncrement = false;
+        }
+      });
+      
+      // AUTO_INCREMENT deve ser NOT NULL
+      attribute.nullable = false;
+      
+      // AUTO_INCREMENT deve ser INTEGER ou BIGINT
+      if (attribute.type !== DataType.INTEGER && attribute.type !== DataType.BIGINT) {
+        attribute.type = DataType.INTEGER;
+      }
+      
+      // AUTO_INCREMENT geralmente é PK
+      if (!attribute.pk && !attribute.unique) {
+        attribute.pk = true;
+        this.onPrimaryKeyChange(attribute);
+      }
+    }
+  }
+
+  // Validação de nome de atributo em tempo real
+  validateAttributeName(attribute: AttributeModel): boolean {
+    if (!attribute.name || attribute.name.trim() === '') {
+      return false;
+    }
+
+    const attrName = attribute.name.trim();
+    
+    // Verificar caracteres válidos
+    if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(attrName)) {
+      return false;
+    }
+
+    // Verificar duplicatas
+    const duplicates = this.entity.items.filter(attr => 
+      attr !== attribute && 
+      attr.name && 
+      attr.name.toLowerCase() === attrName.toLowerCase()
+    );
+
+    return duplicates.length === 0;
+  }
+
+  // Validação de nome de entidade em tempo real
+  validateEntityName(): boolean {
+    if (!this.entity.key || this.entity.key.trim() === '') {
+      return false;
+    }
+
+    const entityName = this.entity.key.trim();
+    
+    // Verificar caracteres válidos
+    if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(entityName)) {
+      return false;
+    }
+
+    return entityName.length >= 2 && entityName.length <= 64;
+  }
+
+  // Verificar se há pelo menos uma PK
+  hasPrimaryKey(): boolean {
+    return this.entity.items.some(attr => attr.pk);
+  }
+
+  // Obter mensagem de erro para atributo
+  getAttributeError(attribute: AttributeModel): string {
+    if (!this.validateAttributeName(attribute)) {
+      if (!attribute.name || attribute.name.trim() === '') {
+        return 'Name is required';
+      }
+      
+      const attrName = attribute.name.trim();
+      
+      if (!/^[a-zA-Z][a-zA-Z0-9_]*$/.test(attrName)) {
+        return 'Must start with letter, use only letters, numbers, underscores';
+      }
+
+      const duplicates = this.entity.items.filter(attr => 
+        attr !== attribute && 
+        attr.name && 
+        attr.name.toLowerCase() === attrName.toLowerCase()
+      );
+
+      if (duplicates.length > 0) {
+        return 'Duplicate name';
+      }
+    }
+    
+    return '';
   }
 
 }

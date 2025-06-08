@@ -16,8 +16,21 @@
           <label for="entityName" class="col-form-label">
             <i class="bi bi-tag"></i>
             Entity Name:
+            <span class="validation-indicator" [class.valid]="validateEntityName()" [class.invalid]="entity.key && !validateEntityName()">
+              <i class="bi bi-check-circle" *ngIf="validateEntityName()"></i>
+              <i class="bi bi-exclamation-triangle" *ngIf="entity.key && !validateEntityName()"></i>
+            </span>
           </label>
-          <input id="entityName" class="form-control" [(ngModel)]="entity.key" type="text" placeholder="Enter entity name">
+          <input id="entityName" 
+                 class="form-control" 
+                 [class.is-valid]="validateEntityName()" 
+                 [class.is-invalid]="entity.key && !validateEntityName()"
+                 [(ngModel)]="entity.key" 
+                 type="text" 
+                 placeholder="Enter entity name (letters, numbers, underscores only)">
+          <div class="invalid-feedback" *ngIf="entity.key && !validateEntityName()">
+            Entity name must start with a letter and be 2-64 characters long
+          </div>
         </div>
         
         <div class="table-container">
@@ -35,18 +48,44 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngFor="let item of entity.items; let i = index">
-                <td><input class="form-control" [(ngModel)]="item.name" type="text" placeholder="Attribute name"></td>
+              <tr *ngFor="let item of entity.items; let i = index" [class.has-error]="getAttributeError(item)">
                 <td>
-                  <select class="form-control" [(ngModel)]="item.type">
+                  <input class="form-control" 
+                         [class.is-valid]="validateAttributeName(item) && item.name"
+                         [class.is-invalid]="getAttributeError(item)"
+                         [(ngModel)]="item.name" 
+                         type="text" 
+                         placeholder="Attribute name">
+                  <small class="text-danger" *ngIf="getAttributeError(item)">{{ getAttributeError(item) }}</small>
+                </td>
+                <td>
+                  <select class="form-control" 
+                          [class.is-invalid]="!item.type"
+                          [(ngModel)]="item.type">
                     <option value="">Select type</option>
                     <option *ngFor="let type of dataTypes" [value]="type">{{type}}</option>
                   </select>
                 </td>
-                <td><input [(ngModel)]="item.pk" type="checkbox" title="Primary Key"></td>
+                <td>
+                  <input [(ngModel)]="item.pk" 
+                         (change)="onPrimaryKeyChange(item)"
+                         type="checkbox" 
+                         title="Primary Key">
+                </td>
                 <td><input [(ngModel)]="item.unique" type="checkbox" title="Unique"></td>
-                <td><input [(ngModel)]="item.nullable" type="checkbox" title="Not Null"></td>
-                <td><input [(ngModel)]="item.autoIncrement" type="checkbox" title="Auto Increment"></td>
+                <td>
+                  <input [ngModel]="!item.nullable" 
+                         (ngModelChange)="item.nullable = !$event"
+                         type="checkbox" 
+                         title="Not Null"
+                         [disabled]="item.pk || item.autoIncrement">
+                </td>
+                <td>
+                  <input [(ngModel)]="item.autoIncrement" 
+                         (change)="onAutoIncrementChange(item)"
+                         type="checkbox" 
+                         title="Auto Increment">
+                </td>
                 <td><input class="form-control" [(ngModel)]="item.defaultValue" type="text" placeholder="Default value"></td>
                 <td>
                   <button class="btn btn-danger" (click)="removeAttribute(i)" title="Remove attribute">
