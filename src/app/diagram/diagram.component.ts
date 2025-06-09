@@ -15,6 +15,7 @@ import { ProjectService } from '../service/project.service';
 import { Project } from '../model/project.model';
 import { StorageService } from '../service/storage.service';
 import { AuthResponseModel } from '../model/auth-response.model';
+import { SqlValidationService, ValidationResult } from '../service/sql-validation.service';
 
 const $ = go.GraphObject.make;
 
@@ -32,6 +33,7 @@ export class DiagramComponent implements OnInit, OnDestroy {
   locations: go.Point[] = [];
   darkMode: boolean = false;
   showTableEditor: boolean = false;
+  showLegend: boolean = false;
   selectedItem: any = null;
   selectedEntity: any = {};
   selectedRelationshipType: '1:1' | '1:N' | 'N:N' | null = null;
@@ -57,7 +59,8 @@ export class DiagramComponent implements OnInit, OnDestroy {
     private ddlService: DdlService,
     private collaborationService: CollaborationService,
     private projectService: ProjectService,
-    private storageService: StorageService
+    private storageService: StorageService,
+    private sqlValidationService: SqlValidationService
   ) {
     this.currentUser = this.storageService.getUser();
   }
@@ -315,31 +318,108 @@ export class DiagramComponent implements OnInit, OnDestroy {
 
     this.diagram.model = new go.GraphLinksModel({nodeDataArray: this.entities});
 
+    // Helper functions for GoJS bindings
+    const getDataTypeIcon = (dataType: string): string => {
+      const iconMap: { [key: string]: string } = {
+        'INTEGER': '🔢', 'BIGINT': '🔢', 'DECIMAL': '💰', 'NUMERIC': '💰',
+        'VARCHAR': '📝', 'CHAR': '🔤', 'TEXT': '📄', 'BOOLEAN': '☑️',
+        'DATE': '📅', 'DATETIME': '🗓️', 'TIMESTAMP': '⏰', 'TIME': '🕐', 'UUID': '🆔'
+      };
+      return iconMap[dataType] || '⚪';
+    };
+
+    const getAttributeIconColor = (attribute: any): string => {
+      if (attribute.pk) return '#dc2626';
+      if (attribute.fk) return '#f59e0b';
+      if (attribute.unique) return '#8b5cf6';
+      return '#6366f1';
+    };
+
+    const getAttributeIconShape = (attribute: any): string => {
+      if (attribute.pk) return 'Diamond';
+      if (attribute.fk) return 'Triangle';
+      if (attribute.unique) return 'Pentagon';
+      return 'Circle';
+    };
+
+    const getAttributeSuffix = (attribute: any): string => {
+      const suffixes = [];
+      if (attribute.pk) suffixes.push('PK');
+      if (attribute.fk) suffixes.push('FK');
+      if (attribute.unique && !attribute.pk) suffixes.push('UQ');
+      if (attribute.autoIncrement) suffixes.push('AI');
+      if (!attribute.nullable) suffixes.push('NN');
+      return suffixes.length > 0 ? ` (${suffixes.join(', ')})` : '';
+    };
+
     const itemTemplate = $(go.Panel, "Horizontal",
+      {
+        margin: new go.Margin(4, 0, 4, 0),
+        stretch: go.GraphObject.Horizontal,
+        defaultAlignment: go.Spot.Left
+      },
+      // Data type icon (emoji)
+      $(go.TextBlock,
+        {
+          font: "14px Inter, system-ui, sans-serif",
+          margin: new go.Margin(0, 6, 0, 0),
+          width: 18,
+          textAlign: "center"
+        },
+        new go.Binding("text", "type", getDataTypeIcon)
+      ),
+      // Shape indicator (geometric shape for PK/FK/UNIQUE)
       $(go.Shape,
         {
-          width: 16,
-          height: 16,
-          margin: new go.Margin(0, 8, 0, 0),
+          width: 10,
+          height: 10,
+          margin: new go.Margin(0, 6, 0, 0),
         },
-        new go.Binding("figure", "pk", pk => pk ? "Diamond" : "Circle"),
-        new go.Binding("fill", "pk", pk => pk ? "#8b5cf6" : "#6366f1"),
-        new go.Binding("stroke", "pk", pk => pk ? "#7c3aed" : "#4f46e5")
+        new go.Binding("figure", "", getAttributeIconShape),
+        new go.Binding("fill", "", getAttributeIconColor),
+        new go.Binding("stroke", "", (attribute) => {
+          const color = getAttributeIconColor(attribute);
+          return color === '#dc2626' ? '#b91c1c' :
+                 color === '#f59e0b' ? '#d97706' :
+                 color === '#8b5cf6' ? '#7c3aed' : '#4f46e5';
+        })
       ),
+      // Attribute name
       $(go.TextBlock,
         {
           font: "14px Inter, system-ui, sans-serif",
-          margin: new go.Margin(0, 8, 0, 0),
+          margin: new go.Margin(0, 6, 0, 0),
+          maxSize: new go.Size(100, NaN),
+          overflow: go.TextBlock.OverflowEllipsis
         },
         new go.Binding("text", "name"),
-        new go.Binding("stroke", "", () => this.darkMode ? "#f3f4f6" : "#1f2937")
+        new go.Binding("stroke", "", () => this.darkMode ? "#f3f4f6" : "#1f2937"),
+        new go.Binding("font", "pk", (pk) =>
+          pk ? "bold 14px Inter, system-ui, sans-serif" : "14px Inter, system-ui, sans-serif"
+        )
       ),
+      // Data type
       $(go.TextBlock,
         {
-          font: "14px Inter, system-ui, sans-serif",
-          stroke: "#6b7280"
+          font: "12px Inter, system-ui, sans-serif",
+          stroke: "#6b7280",
+          margin: new go.Margin(0, 4, 0, 0),
+          maxSize: new go.Size(60, NaN),
+          overflow: go.TextBlock.OverflowEllipsis
         },
-        new go.Binding("text", "type")
+        new go.Binding("text", "type"),
+        new go.Binding("stroke", "", () => this.darkMode ? "#9ca3af" : "#6b7280")
+      ),
+      // Suffixes (PK, FK, UQ, AI, NN)
+      $(go.TextBlock,
+        {
+          font: "bold 10px Inter, system-ui, sans-serif",
+          margin: new go.Margin(0, 0, 0, 2),
+          maxSize: new go.Size(60, NaN),
+          overflow: go.TextBlock.OverflowEllipsis
+        },
+        new go.Binding("text", "", getAttributeSuffix),
+        new go.Binding("stroke", "", getAttributeIconColor)
       )
     );
 
@@ -371,8 +451,13 @@ export class DiagramComponent implements OnInit, OnDestroy {
           new go.Binding("stroke", "", () => this.darkMode ? "#4b5563" : "#e5e7eb")
         ),
         $(go.Panel, "Table",
-          { defaultAlignment: go.Spot.Left, margin: 12 },
+          {
+            defaultAlignment: go.Spot.Left,
+            margin: 0,
+            minSize: new go.Size(220, NaN)  // Minimum width for best layout
+          },
           $(go.RowColumnDefinition, { row: 0, sizing: go.RowColumnDefinition.None }),
+          $(go.RowColumnDefinition, { row: 1, sizing: go.RowColumnDefinition.None }),
 
           // Header
           $(go.Panel, "Horizontal",
@@ -380,13 +465,25 @@ export class DiagramComponent implements OnInit, OnDestroy {
               row: 0,
               alignment: go.Spot.Center,
               stretch: go.GraphObject.Horizontal,
-              background: "#f3f4f6"
+              background: "#f3f4f6",
+              margin: new go.Margin(0, 0, 1, 0)  // Separador do header
             },
             new go.Binding("background", "", () => this.darkMode ? "#1f2937" : "#f3f4f6"),
+            // Table icon
             $(go.TextBlock,
               {
-                font: "600 16px Inter, system-ui, sans-serif",
-                margin: new go.Margin(8, 4, 8, 8),
+                font: "16px Inter, system-ui, sans-serif",
+                margin: new go.Margin(10, 6, 10, 10),
+                text: "🗃️"
+              }
+            ),
+            // Entity name
+            $(go.TextBlock,
+              {
+                font: "600 18px Inter, system-ui, sans-serif",
+                margin: new go.Margin(10, 4, 10, 0),
+                maxSize: new go.Size(200, NaN),
+                overflow: go.TextBlock.OverflowEllipsis
               },
               new go.Binding("text", "key"),
               new go.Binding("stroke", "", () => this.darkMode ? "#f3f4f6" : "#1f2937")
@@ -444,7 +541,7 @@ export class DiagramComponent implements OnInit, OnDestroy {
             {
               name: "ATTRIBUTES",
               row: 1,
-              margin: new go.Margin(8, 0, 0, 0),
+              margin: new go.Margin(8, 8, 8, 8),
               stretch: go.GraphObject.Horizontal,
               itemTemplate: itemTemplate,
               defaultAlignment: go.Spot.Left
@@ -552,6 +649,11 @@ export class DiagramComponent implements OnInit, OnDestroy {
       return;
     }
 
+    // Validate before adding new entity if there are many errors
+    if (!this.validateNewEntity()) {
+      return; // Do not add if user chose to view report
+    }
+
     const newEntity: EntityModel = {
       id: crypto.randomUUID(),
       key: `table${this.entities.length + 1}`,
@@ -604,6 +706,23 @@ export class DiagramComponent implements OnInit, OnDestroy {
   }
 
   handleSave(entity: any): void {
+    // Validate entity before saving
+    const validationResult = this.sqlValidationService.validateEntity(entity, this.entities);
+
+    if (!validationResult.isValid) {
+      const message = this.sqlValidationService.formatValidationMessages(validationResult);
+      alert(message);
+      return; // Do not save if there are errors
+    }
+
+    // Show warnings if any (but allow to continue)
+    if (validationResult.warnings.length > 0) {
+      const warningMessage = `⚠️ WARNINGS:\n${validationResult.warnings.join('\n')}\n\nDo you want to continue anyway?`;
+      if (!confirm(warningMessage)) {
+        return;
+      }
+    }
+
     this.showTableEditor = false;
     const index: number = this.entities.findIndex((e: EntityModel) : boolean => e.id === entity.id);
 
@@ -625,6 +744,9 @@ export class DiagramComponent implements OnInit, OnDestroy {
       nodeDataArray: this.entities,
       linkDataArray: this.relationships
     });
+
+    // Validate the complete diagram after update
+    this.validateDiagram();
   }
 
   handleRemove(id: string): void {
@@ -1028,6 +1150,94 @@ export class DiagramComponent implements OnInit, OnDestroy {
         alert('❌ Still unable to lock entity for editing. Please try again later.');
       }
     });
+  }
+
+  // Complete diagram validation
+  validateDiagram(): void {
+    const validationResult: ValidationResult = this.sqlValidationService.validateDiagram(this.entities);
+
+    // Update visual validation status
+    this.updateValidationStatus(validationResult);
+
+    // Log for debugging (optional)
+    if (!validationResult.isValid) {
+      console.warn('Diagram validation errors:', validationResult.errors);
+    }
+
+    if (validationResult.warnings.length > 0) {
+      console.info('Diagram validation warnings:', validationResult.warnings);
+    }
+  }
+
+  // Update visual diagram status based on validation
+  private updateValidationStatus(validationResult: ValidationResult): void {
+    this.entities.forEach(entity => {
+      const node = this.diagram.findNodeForKey(entity.id);
+      if (node) {
+        const entityValidation = this.sqlValidationService.validateEntity(entity, this.entities);
+
+        // Apply visual styles based on validation
+        const mainShapeObj = node.findObject('MAIN_SHAPE');
+        const mainShape = mainShapeObj as go.Shape;
+
+        if (mainShape && mainShape instanceof go.Shape) {
+          if (!entityValidation.isValid) {
+            // Entity with errors - red border
+            mainShape.stroke = '#dc2626';
+            mainShape.strokeWidth = 2;
+          } else if (entityValidation.warnings.length > 0) {
+            // Entity with warnings - orange border
+            mainShape.stroke = '#f59e0b';
+            mainShape.strokeWidth = 2;
+          } else {
+            // Valid Entity - Default Edge
+            mainShape.stroke = '#6b7280';
+            mainShape.strokeWidth = 1;
+          }
+        }
+      }
+    });
+  }
+
+  // Method to show validations in a modal
+  showValidationReport(): void {
+    const validationResult: ValidationResult = this.sqlValidationService.validateDiagram(this.entities);
+
+    if (validationResult.errors.length === 0 && validationResult.warnings.length === 0) {
+      alert('✅ Diagram is valid! No errors or warnings found.');
+      return;
+    }
+
+    const message = this.sqlValidationService.formatValidationMessages(validationResult);
+    alert(message);
+  }
+
+  // Automatic validation when adding new entity
+  validateNewEntity(): boolean {
+    if (this.entities.length === 0) return true;
+
+    const validationResult = this.sqlValidationService.validateDiagram(this.entities);
+
+    // If there are many entities without validation, warn
+    const invalidEntities = this.entities.filter(entity => {
+      const entityValidation = this.sqlValidationService.validateEntity(entity, this.entities);
+      return !entityValidation.isValid;
+    });
+
+    if (invalidEntities.length > 3) {
+      const proceed = confirm(
+        `⚠️ You have ${invalidEntities.length} entities with validation errors.\n\n` +
+        'Adding more entities without fixing existing issues might create more problems.\n\n' +
+        'Do you want to see the validation report first?'
+      );
+
+      if (proceed) {
+        this.showValidationReport();
+        return false;
+      }
+    }
+
+    return true;
   }
 
 }
