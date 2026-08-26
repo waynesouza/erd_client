@@ -24,13 +24,40 @@ module.exports = function (config) {
     jasmineHtmlReporter: {
       suppressAll: true // removes the duplicated traces
     },
+    customLaunchers: {
+      ChromeHeadlessNoSandbox: {
+        base: 'ChromeHeadless',
+        flags: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu']
+      }
+    },
     coverageReporter: {
       dir: require('path').join(__dirname, './coverage/erd_frontend'),
       subdir: '.',
       reporters: [
-        { type: 'html' },
-        { type: 'text-summary' }
-      ]
+        { type: 'html' },           // human-readable report
+        { type: 'text-summary' },   // console summary
+        { type: 'lcovonly', file: 'lcov.info' },
+        { type: 'json-summary', file: 'coverage-summary.json' }
+      ],
+      // Applied only when the run is started with --code-coverage, so `npm test`
+      // stays fast in watch mode while `npm run test:ci` enforces the number.
+      //
+      // `each` is redundant against `global: 100`, but it makes a regression
+      // name the offending FILE instead of reporting one aggregate percentage.
+      check: {
+        global: {
+          statements: 100,
+          branches: 100,
+          functions: 100,
+          lines: 100
+        },
+        each: {
+          statements: 100,
+          branches: 100,
+          functions: 100,
+          lines: 100
+        }
+      }
     },
     reporters: ['progress', 'kjhtml'],
     port: 9876,

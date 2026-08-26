@@ -13,6 +13,11 @@
   ],
   "include": [
     "src/**/*.spec.ts",
-    "src/**/*.d.ts"
+    "src/**/*.d.ts",
+    // src/test.ts pulls every application source in via require.context so that
+    // nothing escapes instrumentation. That import is dynamic, so files reached
+    // only that way (app.module.ts, app-routing.module.ts) must be listed here
+    // or the Angular webpack plugin refuses to compile them.
+    "src/app/**/*.ts"
   ]
 }
