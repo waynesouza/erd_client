@@ -1,7 +1,8 @@
 import { Component, Input, OnDestroy, OnInit, ViewChild, ElementRef } from '@angular/core';
 import * as go from 'gojs';
 import { Client } from '@stomp/stompjs';
-import * as SockJS from 'sockjs-client';
+import { DiagramRendererService, DiagramRenderHost, LockVisual } from './diagram-renderer.service';
+import { StompClientFactory } from './stomp-client.factory';
 import { DiagramService } from '../service/diagram.service';
 import { DiagramModel } from '../model/diagram.model';
 import { EntityModel } from '../model/entity.model';
@@ -19,14 +20,12 @@ import { environment } from '../../environments/environment';
 import { Subject, Subscription } from 'rxjs';
 import { debounceTime } from 'rxjs/operators';
 
-const $ = go.GraphObject.make;
-
 @Component({
   selector: 'app-diagram',
   templateUrl: './diagram.component.html',
   styleUrls: ['./diagram.component.css']
 })
-export class DiagramComponent implements OnInit, OnDestroy {
+export class DiagramComponent implements OnInit, OnDestroy, DiagramRenderHost {
 
   @Input() entities: EntityModel[] = [];
   @Input() selectedProjectId: string = '';
@@ -65,23 +64,16 @@ export class DiagramComponent implements OnInit, OnDestroy {
     private ddlService: DdlService,
     private collaborationService: CollaborationService,
     private projectService: ProjectService,
-    private storageService: StorageService
+    private storageService: StorageService,
+    private diagramRenderer: DiagramRendererService,
+    private stompClientFactory: StompClientFactory
   ) {
     this.currentUser = this.storageService.getUser();
   }
 
   ngOnInit(): void {
     // WebSocket configuration using @stomp/stompjs
-    this.stompClient = new Client({
-      webSocketFactory: () => new SockJS(environment.wsUrl),
-      connectHeaders: {},
-      debug: (str: string) => {
-        console.log('STOMP Debug:', str);
-      },
-      reconnectDelay: 5000,
-      heartbeatIncoming: 4000,
-      heartbeatOutgoing: 4000,
-    });
+    this.stompClient = this.stompClientFactory.create(environment.wsUrl);
 
     this.stompClient.onConnect = (frame: any) => {
       console.log('Connected: ' + frame);
@@ -206,76 +198,60 @@ export class DiagramComponent implements OnInit, OnDestroy {
   private updateDiagramLockStates(): void {
     if (!this.diagram) return;
 
-    // Update visual appearance of entities based on locks
-    this.diagram.nodes.each((node: go.Node) => {
-      const entity = node.data;
-      const isLocked = this.collaborationService.isEntityLockedByOtherUser(entity.id);
-      const isLockedByMe = this.collaborationService.isEntityLockedByCurrentUser(entity.id);
-      const lockInfo = this.lockedEntities.find(lock => lock.entityId === entity.id);
-
-      // Find the main shape of the entity and cast it to go.Shape
-      const mainShapeObj = node.findObject('MAIN_SHAPE');
-      const mainShape = mainShapeObj as go.Shape;
-
-      if (isLocked && lockInfo) {
-        // Entity locked by another user - locked look
-        node.opacity = 0.7;
-        if (mainShape && mainShape instanceof go.Shape) {
-          mainShape.stroke = '#dc2626'; // Red for blocked
-          mainShape.strokeWidth = 3;
-          mainShape.strokeDashArray = [8, 4]; // Dotted line
-        }
-        // Add "not allowed" cursor
-        node.cursor = 'not-allowed';
-        // Add tooltip with lock information
-        node.toolTip = this.createLockTooltip(lockInfo, false);
-      } else if (isLockedByMe && lockInfo) {
-        // Entity locked by current user - edit view
-        node.opacity = 1.0;
-        if (mainShape && mainShape instanceof go.Shape) {
-          mainShape.stroke = '#10b981'; // Green for editing
-          mainShape.strokeWidth = 3;
-          mainShape.strokeDashArray = null; // Solid line
-        }
-        node.cursor = 'pointer';
-        node.toolTip = this.createLockTooltip(lockInfo, true);
-      } else {
-        // Available entity
-        node.opacity = 1.0;
-        if (mainShape && mainShape instanceof go.Shape) {
-          mainShape.stroke = this.darkMode ? '#4b5563' : '#e5e7eb';
-          mainShape.strokeWidth = 1;
-          mainShape.strokeDashArray = null;
-        }
-        node.cursor = 'pointer';
-        node.toolTip = null;
-      }
-    });
+    this.diagramRenderer.applyLockStyling(this.diagram, this);
   }
 
-  private createLockTooltip(lockInfo: EntityLock, isOwnLock: boolean): go.Adornment {
-    const tooltipText = isOwnLock
+  /**
+   * Decides how one entity should look given its lock state. Pure - the
+   * renderer only copies these values onto GoJS objects.
+   */
+  resolveLockVisual(entityId: string): LockVisual {
+    const isLocked = this.collaborationService.isEntityLockedByOtherUser(entityId);
+    const isLockedByMe = this.collaborationService.isEntityLockedByCurrentUser(entityId);
+    const lockInfo = this.lockedEntities.find(lock => lock.entityId === entityId);
+
+    if (isLocked && lockInfo) {
+      // Entity locked by another user - locked look
+      return {
+        opacity: 0.7,
+        stroke: '#dc2626', // Red for blocked
+        strokeWidth: 3,
+        dash: [8, 4], // Dotted line
+        cursor: 'not-allowed',
+        tooltipText: this.buildLockTooltipText(lockInfo, false),
+        isOwnLock: false
+      };
+    }
+
+    if (isLockedByMe && lockInfo) {
+      // Entity locked by current user - edit view
+      return {
+        opacity: 1.0,
+        stroke: '#10b981', // Green for editing
+        strokeWidth: 3,
+        dash: null, // Solid line
+        cursor: 'pointer',
+        tooltipText: this.buildLockTooltipText(lockInfo, true),
+        isOwnLock: true
+      };
+    }
+
+    // Available entity
+    return {
+      opacity: 1.0,
+      stroke: this.darkMode ? '#4b5563' : '#e5e7eb',
+      strokeWidth: 1,
+      dash: null,
+      cursor: 'pointer',
+      tooltipText: null,
+      isOwnLock: false
+    };
+  }
+
+  buildLockTooltipText(lockInfo: EntityLock, isOwnLock: boolean): string {
+    return isOwnLock
       ? `🔓 You are editing this entity\nLocked at: ${new Date(lockInfo.lockedAt).toLocaleString()}`
       : `🔒 Being edited by: ${lockInfo.userName}\nLocked at: ${new Date(lockInfo.lockedAt).toLocaleString()}`;
-
-    return $(go.Adornment, "Auto",
-      $(go.Shape, "RoundedRectangle",
-        {
-          fill: isOwnLock ? '#10b981' : '#dc2626',
-          stroke: null,
-          opacity: 0.9
-        }
-      ),
-      $(go.TextBlock, tooltipText,
-        {
-          font: "12px Inter, system-ui, sans-serif",
-          stroke: "white",
-          margin: 8,
-          maxSize: new go.Size(200, NaN),
-          wrap: go.TextBlock.WrapFit
-        }
-      )
-    );
   }
 
   private loadDiagramData(projectId: string): void {
@@ -338,329 +314,96 @@ export class DiagramComponent implements OnInit, OnDestroy {
       this.diagram = null;
     }
 
-    this.diagram = $(go.Diagram, 'myDiagramDiv', {
-      initialContentAlignment: go.Spot.Center,
-      "animationManager.isEnabled": false,
-      "undoManager.isEnabled": true,
-      allowDelete: true,
-      allowCopy: false,
-      "toolManager.mouseWheelBehavior": go.ToolManager.WheelZoom,
-      "clickCreatingTool.archetypeNodeData": { text: "new node" },
-      model: new go.GraphLinksModel([])
-    });
-
+    this.diagram = this.diagramRenderer.create('myDiagramDiv', this);
     this.diagram.model = new go.GraphLinksModel({nodeDataArray: this.entities});
+  }
 
-    // Helper functions for GoJS bindings
-    const getDataTypeColor = (dataType: string): string => {
-      const colorMap: { [key: string]: string } = {
-        'INTEGER': '#3b82f6', 'BIGINT': '#3b82f6', 'DECIMAL': '#3b82f6', 'NUMERIC': '#3b82f6',
-        'VARCHAR': '#10b981', 'CHAR': '#10b981', 'TEXT': '#10b981',
-        'BOOLEAN': '#8b5cf6',
-        'DATE': '#f59e0b', 'DATETIME': '#f59e0b', 'TIMESTAMP': '#f59e0b', 'TIME': '#f59e0b',
-        'UUID': '#6b7280'
-      };
-      return colorMap[dataType] || '#9ca3af';
+  // ---------------------------------------------------------------------------
+  // Values consumed by the GoJS templates (DiagramRenderHost).
+  // Each is a pure function of component state so that the presentation rules
+  // stay unit-testable while only the GoJS wiring lives in the renderer.
+  // ---------------------------------------------------------------------------
+
+  getDataTypeColor(dataType: string): string {
+    const colorMap: { [key: string]: string } = {
+      'INTEGER': '#3b82f6', 'BIGINT': '#3b82f6', 'DECIMAL': '#3b82f6', 'NUMERIC': '#3b82f6',
+      'VARCHAR': '#10b981', 'CHAR': '#10b981', 'TEXT': '#10b981',
+      'BOOLEAN': '#8b5cf6',
+      'DATE': '#f59e0b', 'DATETIME': '#f59e0b', 'TIMESTAMP': '#f59e0b', 'TIME': '#f59e0b',
+      'UUID': '#6b7280'
     };
+    return colorMap[dataType] || '#9ca3af';
+  }
 
+  buildAttributeTooltip(attribute: any): string {
+    const constraints = [];
+    if (attribute.pk) constraints.push('Primary Key');
+    if (attribute.fk) constraints.push('Foreign Key');
+    if (attribute.unique && !attribute.pk) constraints.push('Unique');
+    if (attribute.autoIncrement) constraints.push('Auto Increment');
+    if (!attribute.nullable) constraints.push('Not Null');
 
-    // Function to create tooltip with constraint information
+    const constraintText = constraints.length > 0 ? constraints.join(', ') : 'No constraints';
+    return `${attribute.name}\nType: ${attribute.type}\nConstraints: ${constraintText}`;
+  }
 
-    const itemTemplate = $(go.Panel, "Horizontal",
-      {
-        margin: new go.Margin(4, 0, 4, 0),
-        stretch: go.GraphObject.Horizontal,
-        defaultAlignment: go.Spot.Left,
-        // Add tooltip to the entire attribute row
-        toolTip: $("ToolTip",
-          $(go.TextBlock,
-            {
-              margin: 4,
-              font: "12px Inter, system-ui, sans-serif"
-            },
-            new go.Binding("text", "", (attribute: any) => {
-              const constraints = [];
-              if (attribute.pk) constraints.push('Primary Key');
-              if (attribute.fk) constraints.push('Foreign Key');
-              if (attribute.unique && !attribute.pk) constraints.push('Unique');
-              if (attribute.autoIncrement) constraints.push('Auto Increment');
-              if (!attribute.nullable) constraints.push('Not Null');
+  getAttributeFont(pk: boolean): string {
+    return pk ? "bold 14px Inter, system-ui, sans-serif" : "14px Inter, system-ui, sans-serif";
+  }
 
-              const constraintText = constraints.length > 0 ? constraints.join(', ') : 'No constraints';
-              return `${attribute.name}\nType: ${attribute.type}\nConstraints: ${constraintText}`;
-            })
-          )
-        )
-      },
-      // Data type color indicator
-      $(go.Shape, "Circle",
-        {
-          width: 10,
-          height: 10,
-          strokeWidth: 0,
-          margin: new go.Margin(0, 6, 0, 2)
-        },
-        new go.Binding("fill", "type", getDataTypeColor)
-      ),
-      // Attribute name
-      $(go.TextBlock,
-        {
-          font: "14px Inter, system-ui, sans-serif",
-          margin: new go.Margin(0, 6, 0, 0),
-          maxSize: new go.Size(120, NaN),
-          overflow: go.TextBlock.OverflowEllipsis
-        },
-        new go.Binding("text", "name"),
-        new go.Binding("stroke", "", () => this.darkMode ? "#f3f4f6" : "#1f2937"),
-        new go.Binding("font", "pk", (pk) =>
-          pk ? "bold 14px Inter, system-ui, sans-serif" : "14px Inter, system-ui, sans-serif"
-        )
-      ),
-      // PK label
-      $(go.TextBlock,
-        {
-          font: "bold 9px Inter, system-ui, sans-serif",
-          stroke: "#f59e0b",
-          margin: new go.Margin(0, 4, 0, 4)
-        },
-        new go.Binding("text", "pk", (pk: boolean) => pk ? "PK" : ""),
-        new go.Binding("visible", "pk")
-      ),
-      // Data type
-      $(go.TextBlock,
-        {
-          font: "12px Inter, system-ui, sans-serif",
-          stroke: "#6b7280",
-          margin: new go.Margin(0, 4, 0, 0),
-          maxSize: new go.Size(80, NaN),
-          overflow: go.TextBlock.OverflowEllipsis
-        },
-        new go.Binding("text", "type"),
-        new go.Binding("stroke", "", () => this.darkMode ? "#9ca3af" : "#6b7280")
-      )
-    );
+  getPkLabel(pk: boolean): string {
+    return pk ? "PK" : "";
+  }
 
-    this.diagram.nodeTemplate =
-      $(go.Node, "Auto",
-        {
-          selectionAdorned: true,
-          resizable: true,
-          layoutConditions: go.Part.LayoutStandard & ~go.Part.LayoutNodeSized,
-          fromSpot: go.Spot.AllSides,
-          toSpot: go.Spot.AllSides,
-          isShadowed: true,
-          shadowOffset: new go.Point(2, 2),
-          shadowColor: "rgba(0,0,0,0.2)",
-          click: (e: go.InputEvent, node: go.GraphObject): void => {
-            // @ts-ignore
-            this.entityClicked(node.part.data);
-          }
-        },
-        new go.Binding("location", "location").makeTwoWay(),
-        $(go.Shape, "RoundedRectangle",
-          {
-            name: "MAIN_SHAPE",
-            fill: "white",
-            stroke: "#e5e7eb",
-            strokeWidth: 1,
-          },
-          new go.Binding("fill", "", () => this.darkMode ? "#374151" : "white"),
-          new go.Binding("stroke", "", () => this.darkMode ? "#4b5563" : "#e5e7eb")
-        ),
-        $(go.Panel, "Table",
-          {
-            defaultAlignment: go.Spot.Left,
-            margin: 0,
-            minSize: new go.Size(220, NaN)  // Minimum width for best layout
-          },
-          $(go.RowColumnDefinition, { row: 0, sizing: go.RowColumnDefinition.None }),
-          $(go.RowColumnDefinition, { row: 1, sizing: go.RowColumnDefinition.None }),
+  getPrimaryTextStroke(): string {
+    return this.darkMode ? "#f3f4f6" : "#1f2937";
+  }
 
-          // Header
-          $(go.Panel, "Horizontal",
-            {
-              row: 0,
-              alignment: go.Spot.Center,
-              stretch: go.GraphObject.Horizontal,
-              background: "#f3f4f6",
-              margin: new go.Margin(0, 0, 1, 0)  // Separador do header
-            },
-            new go.Binding("background", "", () => this.darkMode ? "#1f2937" : "#f3f4f6"),
-            // Table icon
-            $(go.TextBlock,
-              {
-                font: "16px bootstrap-icons",
-                margin: new go.Margin(12, 6, 8, 10),
-                text: ""
-              },
-              new go.Binding("stroke", "", () => this.darkMode ? "#f3f4f6" : "#1f2937")
-            ),
-            // Entity name
-            $(go.TextBlock,
-              {
-                font: "600 18px Inter, system-ui, sans-serif",
-                margin: new go.Margin(10, 4, 10, 0),
-                maxSize: new go.Size(200, NaN),
-                overflow: go.TextBlock.OverflowEllipsis
-              },
-              new go.Binding("text", "key"),
-              new go.Binding("stroke", "", () => this.darkMode ? "#f3f4f6" : "#1f2937")
-            ),
-            // Lock indicator with user info
-            $(go.Panel, "Horizontal",
-              {
-                name: "LOCK_INDICATOR",
-                margin: new go.Margin(8, 8, 8, 4),
-                background: "transparent"
-              },
-              new go.Binding("visible", "id", (entityId) => {
-                return this.lockedEntities.some(lock => lock.entityId === entityId);
-              }).ofObject(),
-              // Lock icon
-              $(go.TextBlock,
-                {
-                  font: "12px Inter, system-ui, sans-serif",
-                  margin: new go.Margin(0, 2, 0, 0)
-                },
-                new go.Binding("text", "id", (entityId) => {
-                  const isLockedByMe = this.collaborationService.isEntityLockedByCurrentUser(entityId);
-                  return isLockedByMe ? "🔓" : "🔒";
-                }).ofObject(),
-                new go.Binding("stroke", "id", (entityId) => {
-                  const isLockedByMe = this.collaborationService.isEntityLockedByCurrentUser(entityId);
-                  return isLockedByMe ? "#10b981" : "#dc2626";
-                }).ofObject()
-              ),
-              // User name
-              $(go.TextBlock,
-                {
-                  font: "10px Inter, system-ui, sans-serif",
-                  maxSize: new go.Size(80, NaN),
-                  overflow: go.TextBlock.OverflowEllipsis
-                },
-                new go.Binding("text", "id", (entityId) => {
-                  const lockInfo = this.lockedEntities.find(lock => lock.entityId === entityId);
-                  if (!lockInfo) return "";
+  getSecondaryTextStroke(): string {
+    return this.darkMode ? "#9ca3af" : "#6b7280";
+  }
 
-                  const isLockedByMe = this.collaborationService.isEntityLockedByCurrentUser(entityId);
-                  const userName = isLockedByMe ? "You" : this.getFirstName(lockInfo.userName);
-                  return userName;
-                }).ofObject(),
-                new go.Binding("stroke", "id", (entityId) => {
-                  const isLockedByMe = this.collaborationService.isEntityLockedByCurrentUser(entityId);
-                  return isLockedByMe ? "#10b981" : "#dc2626";
-                }).ofObject()
-              )
-            )
-          ),
+  getNodeFill(): string {
+    return this.darkMode ? "#374151" : "white";
+  }
 
-          // Attributes list
-          $(go.Panel, "Vertical",
-            {
-              name: "ATTRIBUTES",
-              row: 1,
-              margin: new go.Margin(8, 8, 8, 8),
-              stretch: go.GraphObject.Horizontal,
-              itemTemplate: itemTemplate,
-              defaultAlignment: go.Spot.Left
-            },
-            new go.Binding("itemArray", "items")
-          )
-        )
-      );
+  getNodeStroke(): string {
+    return this.darkMode ? "#4b5563" : "#e5e7eb";
+  }
 
-    this.diagram.linkTemplate =
-      $(go.Link,
-        {
-          routing: go.Link.AvoidsNodes,
-          curve: go.Link.JumpOver,
-          corner: 10,
-          selectionAdorned: true,
-          fromEndSegmentLength: 50,
-          toEndSegmentLength: 50,
-        },
-        $(go.Shape,
-          {
-            stroke: "#6b7280",
-            strokeWidth: 2,
-          },
-          new go.Binding("stroke", "", () => this.darkMode ? "#4b5563" : "#6b7280")
-        ),
-        $(go.Shape,
-          { toArrow: "Standard", stroke: null },
-          new go.Binding("fill", "", () => this.darkMode ? "#4b5563" : "#6b7280")
-        ),
-        $(go.Panel, "Auto",
-          {
-            segmentOffset: new go.Point(0, -12)
-          },
-          $(go.Shape, "RoundedRectangle",
-            {
-              fill: this.darkMode ? "#374151" : "white",
-              stroke: this.darkMode ? "#4b5563" : "#e5e7eb"
-            }
-          ),
-          $(go.TextBlock,
-            {
-              text: "1",
-              font: "600 12px Inter, system-ui, sans-serif",
-              margin: 3
-            },
-            new go.Binding("text", "text"),
-            new go.Binding("stroke", "", () => this.darkMode ? "#f3f4f6" : "#1f2937")
-          )
-        ),
-        $(go.Panel, "Auto",
-          {
-            segmentOffset: new go.Point(0, -12),
-            segmentIndex: -1
-          },
-          $(go.Shape, "RoundedRectangle",
-            {
-              fill: this.darkMode ? "#374151" : "white",
-              stroke: this.darkMode ? "#4b5563" : "#e5e7eb"
-            }
-          ),
-          $(go.TextBlock,
-            {
-              font: "600 12px Inter, system-ui, sans-serif",
-              margin: 3
-            },
-            new go.Binding("text", "toText"),
-            new go.Binding("stroke", "", () => this.darkMode ? "#f3f4f6" : "#1f2937")
-          )
-        )
-      );
+  getHeaderBackground(): string {
+    return this.darkMode ? "#1f2937" : "#f3f4f6";
+  }
 
-    this.diagram.nodeTemplate.doubleClick = (e: go.InputEvent, node: go.GraphObject): void => {
-      // @ts-ignore
-      const clickedNode = node.part.data;
-      this.showTableEditorModal(clickedNode);
+  getLinkStroke(): string {
+    return this.darkMode ? "#4b5563" : "#6b7280";
+  }
+
+  isEntityLocked(entityId: string): boolean {
+    return this.lockedEntities.some(lock => lock.entityId === entityId);
+  }
+
+  getLockIcon(entityId: string): string {
+    return this.collaborationService.isEntityLockedByCurrentUser(entityId) ? "🔓" : "🔒";
+  }
+
+  getLockStrokeColor(entityId: string): string {
+    return this.collaborationService.isEntityLockedByCurrentUser(entityId) ? "#10b981" : "#dc2626";
+  }
+
+  getLockUserLabel(entityId: string): string {
+    const lockInfo = this.lockedEntities.find(lock => lock.entityId === entityId);
+    if (!lockInfo) return "";
+
+    const isLockedByMe = this.collaborationService.isEntityLockedByCurrentUser(entityId);
+    return isLockedByMe ? "You" : this.getFirstName(lockInfo.userName);
+  }
+
+  onDiagramModified(): void {
+    if (!this.isUpdatingFromServer && this.projectId) {
+      this.changeSubject.next();
+      this.diagram.isModified = false;
     }
-
-    // Event listener for pressing the delete key
-    this.diagram.commandHandler.deleteSelection = () : void => {
-      let selection: go.Set<go.Part> = this.diagram.selection;
-
-      selection.each((part: go.Part): void => {
-        if (part instanceof go.Node) {
-          this.handleRemove(part.data.id);
-        } else if (part instanceof go.Link) {
-          this.removeRelationship(part.data.id);
-        } else {
-          return;
-        }
-      });
-
-      go.CommandHandler.prototype.deleteSelection.call(this.diagram.commandHandler);
-    };
-
-    this.diagram.addDiagramListener("Modified", () => {
-      if (!this.isUpdatingFromServer && this.projectId) {
-        this.changeSubject.next();
-        this.diagram.isModified = false;
-      }
-    });
   }
 
   toggleDarkMode(): void {
@@ -1195,6 +938,11 @@ export class DiagramComponent implements OnInit, OnDestroy {
       } else {
         // Debug: show what we're comparing
         const matchingNames = foreignKeys.filter(fk => fk.name.toLowerCase() === fkName.toLowerCase());
+        /* istanbul ignore next -- unreachable: `foreignKeys` only contains items
+           with fk === true, so a non-empty `matchingNames` would also have
+           satisfied the identical findIndex predicate above and taken the `if`
+           branch. This debug arm contradicts its own guard. Left in place
+           because behaviour is deliberately not being changed. */
         if (matchingNames.length > 0) {
           console.log(`🔍 Found name match but not FK: ${matchingNames[0].name} (fk: ${matchingNames[0].fk})`);
         }
@@ -1583,22 +1331,7 @@ export class DiagramComponent implements OnInit, OnDestroy {
   private refreshDiagramBindings(): void {
     if (!this.diagram) return;
 
-    try {
-      // Force update of GoJS bindings
-      this.diagram.nodes.each((node: go.Node) => {
-        // Update lock indicator specific bindings
-        const lockIndicator = node.findObject('LOCK_INDICATOR');
-        if (lockIndicator) {
-          // Force update of bindings
-          node.updateTargetBindings();
-        }
-      });
-
-      // Invalidate the diagram to force re-render
-      this.diagram.invalidateDocumentBounds();
-    } catch (error) {
-      console.error('Error refreshing diagram bindings:', error);
-    }
+    this.diagramRenderer.refreshBindings(this.diagram);
   }
 
   private handleLockFailure(entity: any): void {
