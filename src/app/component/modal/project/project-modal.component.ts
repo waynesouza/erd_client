@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { StorageService } from '../../../service/storage.service';
 import { ProjectService } from '../../../service/project.service';
 import { DiagramService } from '../../../service/diagram.service';
+import { WindowRefService } from '../../../service/window-ref.service';
 import { Project, ProjectUser, CreateProjectDto, UpdateProjectDto } from '../../../model/project.model';
 
 @Component({
@@ -41,7 +42,8 @@ export class ProjectModalComponent implements OnInit {
   constructor(
     private diagramService: DiagramService,
     private projectService: ProjectService,
-    private storageService: StorageService
+    private storageService: StorageService,
+    private windowRef: WindowRefService
   ) {}
 
   ngOnInit(): void {
@@ -369,7 +371,7 @@ export class ProjectModalComponent implements OnInit {
         const errorMessage = error.error?.message || 'Failed to update member role. Please try again.';
         alert(errorMessage);
         // Revert the role change in the UI by reloading data
-        window.location.reload();
+        this.windowRef.nativeWindow.location.reload();
       }
     });
   }

@@ -108,7 +108,15 @@
             "styles": [
               "src/styles.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "codeCoverageExclude": [
+              "src/polyfills.ts",
+              "src/main.ts",
+              "src/environments/environment.prod.ts",
+              "src/testing/**/*.ts",
+              "src/app/diagram/diagram-renderer.service.ts",
+              "src/app/diagram/stomp-client.factory.ts"
+            ]
           }
         }
       }
