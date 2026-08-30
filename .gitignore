@@ -44,3 +44,8 @@ Thumbs.db
 # Environment variables
 .env
 .env.*
+
+# Graphify - machine-local state (absolute interpreter/scan paths) and derived cache
+graphify-out/.graphify_python
+graphify-out/.graphify_root
+graphify-out/cache/
